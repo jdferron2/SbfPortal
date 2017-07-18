@@ -27,13 +27,13 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
-@Theme("sbftheme")
+@Theme("sbftheme") 
 public class SbfUI extends UI {
 	private VerticalLayout 		viewLayout 		= new VerticalLayout();
 	private VerticalLayout 		rootLayout 		= new VerticalLayout();
 	private HorizontalLayout 	menuLayout 		= new HorizontalLayout();
 	private Navigator 			navigator;	
-	//@WebServlet(value = "/*", asyncSupported = true)
+	@WebServlet(value = "/*", asyncSupported = true)
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
 	public static class Servlet extends VaadinServlet {
