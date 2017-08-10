@@ -3,8 +3,10 @@ package com.jdf.SbfPortal.views;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import com.jdf.SbfPortal.SessionAttributes;
+import com.jdf.SbfPortal.UiComponents.DraftDisplayPopupUI;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
@@ -14,7 +16,10 @@ import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.server.BrowserWindowOpener;
+import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Audio;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.SelectionMode;
@@ -26,6 +31,7 @@ import com.vaadin.ui.MenuBar.MenuItem;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import com.vaadin.ui.components.grid.HeaderRow;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.themes.ValoTheme;
@@ -42,11 +48,19 @@ public class DraftDayView extends HorizontalLayout implements View {
 	private String availPositionFilterValue="";
 	private String availIsDraftedFilterValue="Available";
 	private boolean viewBuilt = false;
+	private boolean icingEnabled;
 	private SbfDraftService draftService;
 	private PlayerService playerService;
 	private SbfLeagueService leagueService;
 	private LeagueInfoManager leagueMgr;
 	private Integer leagueId;
+	private Integer sbfId;
+	private Random rand = new Random();
+	private boolean isAWinner = false;
+	DraftDisplayPopupUI test;
+	BrowserWindowOpener draftDisplayOpener;
+	private Audio PICKISINSOUND = new Audio(null, new ThemeResource("audio/pickIsInChime.mp3"));
+	Window resumeWindow = new Window("Resume Draft");
 
 	private final Command filterCommand = new Command() {
 		@Override
@@ -91,17 +105,28 @@ public class DraftDayView extends HorizontalLayout implements View {
 				leagueId = 
 						(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_ID);
 			}
+			if(sbfId == null){
+				sbfId = 
+						(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SBF_ID);
+			}
+			if(UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED) == null){
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, true);
+				icingEnabled = true;
+			}else{
+				icingEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
+			}
+			
 			if (!viewBuilt) {
 				buildView();
 				viewBuilt=true;
 			}
-			
+
 			playersDataProvider.refreshAll();
 			draftedPlayersDataProvider.refreshAll();
 		}
 
 		protected void buildView(){
-			playerList =  playerService.getAllPlayers();
+			playerList =  playerService.getTopNPlayers(500);
 			onTheClock.setCaptionAsHtml(true);
 			setOnTheClockCaption();
 			setSizeFull();
@@ -114,6 +139,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 			final HorizontalLayout bannerLayout = new HorizontalLayout();
 			bannerLayout.setSizeFull();
+			PICKISINSOUND.setShowControls(false); PICKISINSOUND.setSizeUndefined();
 
 			final HorizontalLayout gridsLayout = new HorizontalLayout();
 			gridsLayout.setSizeFull();
@@ -123,19 +149,30 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 			draftedGrid = configureDraftedGrid();
 
-			Button undoButton = new Button("Undo");
-			undoButton.addClickListener(new Button.ClickListener()
+			createResumeWindow();
+
+			Button pickIsInButton = new Button("Pick is In!!!");
+			pickIsInButton.addClickListener(new Button.ClickListener()
 			{ @Override public void buttonClick(Button.ClickEvent clickEvent)
 			{
-				leagueMgr.undoLastDraftPick();
-				draftedPlayersDataProvider.refreshAll();
-				playersDataProvider.refreshAll();
-				setOnTheClockCaption();
+				for(UI t : getSession().getUIs()){
+					if(t.getClass().equals(DraftDisplayPopupUI.class)){
+						((DraftDisplayPopupUI) t).pickIsIn();
+					}
+				}
+				PICKISINSOUND.play();
 			} });
 
-			bannerLayout.addComponents(onTheClock, undoButton);
-			bannerLayout.setComponentAlignment(undoButton, Alignment.TOP_RIGHT);
+			final Button launchDraftDisplay = new Button("Launch Draft Display");
+			draftDisplayOpener = new BrowserWindowOpener(DraftDisplayPopupUI.class);
+			draftDisplayOpener.setFeatures("Height=500, width=500");
+			draftDisplayOpener.extend(launchDraftDisplay);
+
+			bannerLayout.addComponents(PICKISINSOUND,onTheClock,pickIsInButton, launchDraftDisplay);
 			bannerLayout.setHeight("70px");
+			bannerLayout.setExpandRatio(PICKISINSOUND, 0);
+			bannerLayout.setExpandRatio(onTheClock, 1);
+
 			gridsLayout.addComponents(availableGrid,draftedGrid);
 			layout.addComponents(bannerLayout,gridsLayout);
 			layout.setExpandRatio(gridsLayout, 1);
@@ -153,8 +190,18 @@ public class DraftDayView extends HorizontalLayout implements View {
 			.setCaption("Position");
 			draftedGrid.addColumn(s->leagueService.getSbfTeamBySbfId(s.getSbfId(), leagueId).getOwnerName())
 			.setCaption("Drafted By");
-			draftedGrid.addColumn(SbfDraftRecord::getSlotDrafted).setCaption("Drafted");
+			draftedGrid.addColumn(SbfDraftRecord::getSlotDrafted).setCaption("Drafted").setId("DraftedColumn");
+			draftedGrid.addColumn(player->"Undo", undoButtonRenderer()).setId("UndoColumn");
 			draftedPlayersDataProvider = (ListDataProvider<SbfDraftRecord>) draftedGrid.getDataProvider();
+			draftedGrid.sort("DraftedColumn");
+			draftedGrid.getColumn("UndoColumn").setStyleGenerator(p -> {
+				if (leagueService.getSbfKeeperByPlayerId(p.getPlayerId(), leagueId)!= null) {
+					return "hidden" ;
+				}else{
+					return null;
+				}
+			});
+
 			return draftedGrid;
 		}
 
@@ -165,7 +212,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 			availableGrid.setSizeFull();
 			availableGrid.setSelectionMode(SelectionMode.SINGLE);
-			availableGrid.addColumn(p->playerService.getSbfRankById(p.getPlayerId(), leagueId).getRank()).setCaption("My Rank");
+			availableGrid.addColumn(p->playerService.getSbfRankById(p.getPlayerId(), sbfId) == null ? 1000 : 
+				playerService.getSbfRankById(p.getPlayerId(), sbfId).getRank()
+					).setCaption("My Rank").setId("RankColumn");
 			availableGrid.addColumn(Player::getPosition).setCaption("Position").setId("PositionColumn");
 			availableGrid.addColumn(Player::getDisplayName).setCaption("Name").setId("PlayerNameColumn");
 			availableGrid.addColumn(Player::getTeam).setCaption("Team");
@@ -197,6 +246,8 @@ public class DraftDayView extends HorizontalLayout implements View {
 			filterRow.getCell("PlayerNameColumn").setComponent(availPlayerNameFilter);
 			filterRow.getCell("PositionColumn").setComponent(availPositionFilter);
 			filterRow.getCell("DraftedColumn").setComponent(availIsDraftedFilter);
+
+			availableGrid.sort("RankColumn");
 
 			return availableGrid;
 
@@ -260,9 +311,11 @@ public class DraftDayView extends HorizontalLayout implements View {
 			availPlayerPosFilter.addItem("All", filterCommand);
 			availPlayerPosFilter.addItem("QB", filterCommand);
 			availPlayerPosFilter.addItem("RB", filterCommand);
+			availPlayerPosFilter.addItem("WR", filterCommand);
 			availPlayerPosFilter.addItem("TE", filterCommand);
 			availPlayerPosFilter.addItem("K", filterCommand);
 			availPlayerPosFilter.addItem("DEF", filterCommand);
+
 			availPlayerPosFilter.setDescription("Position Filter");
 			return posFilterMenuBar;
 		}
@@ -280,16 +333,35 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 		@SuppressWarnings({ "rawtypes" })
 		public ButtonRenderer draftedButtonRenderer (){
-			ButtonRenderer<Object> test = new ButtonRenderer<Object>();
-			test.addClickListener(clickEvent -> {
+			ButtonRenderer<Object> draftButtonRenderer = new ButtonRenderer<Object>();
+			draftButtonRenderer.addClickListener(clickEvent -> {
 				Player selectedPlayer = (Player)clickEvent.getItem();
 				leagueMgr.draftPlayer(selectedPlayer, leagueId);
-				availableGrid.getDataProvider().refreshAll();
+				//availableGrid.getDataProvider().refreshAll();
 				draftedGrid.getDataProvider().refreshAll();
+				//availableGrid.getDataProvider().refreshItem(selectedPlayer);
+				playersDataProvider.refreshAll();
+				int randomInt = rand.nextInt(99) + 1;
+				if (randomInt < 4 && icingEnabled) isAWinner=true;
+				setOnTheClockCaption();
+			});
+			return draftButtonRenderer;
+		}
+
+		@SuppressWarnings({ "rawtypes" })
+		public ButtonRenderer undoButtonRenderer (){
+			ButtonRenderer<Object> undoButtonRenderer = new ButtonRenderer<Object>();
+			undoButtonRenderer.addClickListener(clickEvent -> {
+				SbfDraftRecord rec = (SbfDraftRecord)clickEvent.getItem();
+				draftService.deleteSbfDraftRecord(rec);
+				draftedGrid.getDataProvider().refreshAll();
+				Player p = playerService.getPlayerById(rec.getPlayerId());
+				//availableGrid.getDataProvider().refreshItem(p);
+				playersDataProvider.refreshAll();
 
 				setOnTheClockCaption();
 			});
-			return test;
+			return undoButtonRenderer;
 		}
 
 		public void setOnTheClockCaption(){
@@ -298,5 +370,42 @@ public class DraftDayView extends HorizontalLayout implements View {
 			int pickInRound =leagueMgr.getPickInRound();
 			onTheClock.setCaption("<h2>On The Clock: " + teamOnTheClock + 
 					"<br/>Round " + round + ", pick " + pickInRound + "</h2>");
+
+			for(UI t : getSession().getUIs()){
+				if(t.getClass().equals(DraftDisplayPopupUI.class)){
+					((DraftDisplayPopupUI) t).processPick(isAWinner);
+				}
+			}
+			if(isAWinner){
+				UI.getCurrent().addWindow(resumeWindow);
+				isAWinner=false;
+			}				
+		}
+
+		private void createResumeWindow(){
+			resumeWindow.setModal(true);
+			resumeWindow.setClosable(false);
+			VerticalLayout layout = new VerticalLayout();
+			layout.setMargin(true);
+			layout.setSpacing(true);
+			Label message = new Label("Resume Draft.");
+			layout.addComponent(message);
+			resumeWindow.setContent(layout);
+			Button resumeButton = new Button("Resume Draft");
+			resumeButton.addClickListener(new Button.ClickListener()
+			{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+			{
+				for(UI t : getSession().getUIs()){
+					if(t.getClass().equals(DraftDisplayPopupUI.class)){
+						((DraftDisplayPopupUI) t).processPick(false);
+					}			
+				}
+				resumeWindow.close();
+			}
+			});
+
+			layout.addComponent(resumeButton);
+			layout.setComponentAlignment(resumeButton, Alignment.MIDDLE_RIGHT);
+
 		}
 }

@@ -9,12 +9,15 @@ public class SbfTeam {
 	private int draftSlot;
 	private int sbfId;
 	private int leagueId;
+	private String teamName;
+	
 	public SbfTeam() {}
-	public SbfTeam(int leagueId, String owner, int draftPosition, int id){
+	public SbfTeam(int leagueId, String owner, int draftPosition, int id, String teamName){
 		this.leagueId = leagueId;
 		this.ownerName = owner;
 		this.draftSlot = draftPosition;
 		this.sbfId = id;
+		this.teamName = teamName;
 	}
 	
 	public String getOwnerName() {
@@ -42,6 +45,12 @@ public class SbfTeam {
 	}
 	public void setLeagueId(int leagueId) {
 		this.leagueId = leagueId;
+	}
+	public String getTeamName() {
+		return teamName;
+	}
+	public void setTeamName(String teamName) {
+		this.teamName = teamName;
 	}
 
 }

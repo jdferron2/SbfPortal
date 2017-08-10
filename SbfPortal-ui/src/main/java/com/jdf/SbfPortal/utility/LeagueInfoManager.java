@@ -16,8 +16,8 @@ import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.vaadin.ui.UI;
 
 public class LeagueInfoManager {
-	private static final int	NUMBER_OF_TEAMS = 12;
-	private static final int	NUMBER_OF_ROUNDS =15;
+	public static final int	NUMBER_OF_TEAMS = 12;
+	public static final int	NUMBER_OF_ROUNDS =17;
 	Integer leagueId;
 	Integer sbfId;
 	PlayerService playerService;
@@ -50,10 +50,20 @@ public class LeagueInfoManager {
 	//	}
 
 	public synchronized int getCurrentPick(){
+		int currentPick = 1;
+		List<SbfDraftRecord> draftList = new ArrayList<>(draftService.getAllDraftRecords(leagueId));
+		draftList.sort((s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted()));
 		if (draftService.getAllDraftRecords(leagueId).isEmpty()) return 1;
-		return draftService.getAllDraftRecords(leagueId).stream().max(
-				(s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted())
-				).get().getSlotDrafted() + 1;
+		for (SbfDraftRecord rec : draftList){
+			if(rec.getSlotDrafted() > currentPick){
+				return currentPick;
+			}
+			currentPick++;
+		}
+		return currentPick;
+//		return draftService.getAllDraftRecords(leagueId).stream().max(
+//				(s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted())
+//				).get().getSlotDrafted() + 1;
 	}
 	public synchronized int getRound(){
 		return getRound(getCurrentPick());
@@ -117,7 +127,7 @@ public class LeagueInfoManager {
 			draftService.addSbfDraftRecord(draftRecord);
 		}
 	}
-
+	
 	public synchronized void movePlayerUp(Player player){
 		SbfRank sbfRank = playerService.getSbfRankById(player.getPlayerId(), sbfId);
 		int newRank = sbfRank.getRank()-1;
@@ -139,6 +149,17 @@ public class LeagueInfoManager {
 		}
 		sbfRank.setRank(newRank);
 		playerService.addRankToUpdateList(sbfRank);
+	}
+	
+	public synchronized void setNewRankValue(SbfRank rank, int newRank){
+		if (newRank <= 0) return;
+		
+		SbfRank oldRank = playerService.getSbfRankObjByRank(newRank, sbfId);
+		oldRank.setRank(rank.getRank());
+		rank.setRank(newRank);
+
+		playerService.addRankToUpdateList(rank);
+		playerService.addRankToUpdateList(oldRank);
 	}
 
 	public synchronized void movePlayerDown(Player player){

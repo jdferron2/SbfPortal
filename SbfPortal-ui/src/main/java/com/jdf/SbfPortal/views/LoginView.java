@@ -3,6 +3,7 @@ package com.jdf.SbfPortal.views;
 import com.jdf.SbfPortal.SessionAttributes;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.SbfLeague;
+import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Alignment;
@@ -61,9 +62,11 @@ public class LoginView extends HorizontalLayout implements View  {
 				}else {
 					message = "Pick a league, dummy";
 				}
-				if(leagueService.getSbfTeamByName(username.getValue(), leagueComboBox.getValue().getLeagueId()) != null
+				SbfTeam teamLoggingIn = leagueService.getSbfTeamByName(username.getValue(), leagueComboBox.getValue().getLeagueId());
+				if(teamLoggingIn != null
 						&& message.equals("Nope")){
 					getUI().getSession().setAttribute(SessionAttributes.USER_NAME, username.getValue());
+					getUI().getSession().setAttribute(SessionAttributes.SBF_ID, teamLoggingIn.getSbfId());
 					getUI().getNavigator().navigateTo("");
 				}else{
 					Notification.show(message, Notification.Type.WARNING_MESSAGE);

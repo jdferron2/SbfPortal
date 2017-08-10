@@ -20,6 +20,7 @@ import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
@@ -44,6 +45,7 @@ public class AdminView extends VerticalLayout implements View  {
 	private PlayerService playerService;
 	private SbfLeagueService leagueService;
 	private LeagueInfoManager leagueMgr;
+	private boolean icingEnabled;
 
 	public AdminView(){
 		
@@ -74,6 +76,12 @@ public class AdminView extends VerticalLayout implements View  {
 			sbfId = 
 					(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SBF_ID);
 		}
+		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED) == null){
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, true);
+			icingEnabled = true;
+		}else{
+			icingEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
+		}
 		if(!viewBuilt){
 			buildView();
 			viewBuilt=true;
@@ -81,10 +89,17 @@ public class AdminView extends VerticalLayout implements View  {
 	}
 
 	private void buildView(){
-		team1PickSelector = createTradeBox(1);
-		team2PickSelector = createTradeBox(2);
+		team1PickSelector = createTradeBox(sbfId);
+		team2PickSelector = createTradeBox(sbfId);
 		team1Selector =  this.createTeamSelectorCB("Team 1", team1PickSelector);
 		team2Selector =  this.createTeamSelectorCB("Team 2", team2PickSelector);
+		CheckBox enableIcing = new CheckBox("Icing Enabled");
+		enableIcing.setValue(icingEnabled);
+
+		enableIcing.addValueChangeListener(event ->
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, enableIcing.getValue())
+			);
+		
 		setSpacing(true);
 		setMargin(true);
 		Button resetPlayerList = new Button("Reset Players Table");
@@ -97,9 +112,9 @@ public class AdminView extends VerticalLayout implements View  {
 				//re-load active players from api
 				Players players = RestAPIUtils.getInstance().invokeQueryPlayers();
 				for(Player player : players.getPlayers()){
-					if (player.getActive() == 1){
+					//if (player.getActive() == 1){
 						playerService.insertPlayer(player);
-					}			
+					//}			
 				}
 
 				//set pro ranks for all players
@@ -111,30 +126,24 @@ public class AdminView extends VerticalLayout implements View  {
 						playerService.updatePlayer(player);
 					}
 				}
-
-
-				int newPlayerRank = playerService.getMaxSbfRank(1);
+				
 				for (Player p : playerService.getAllPlayers()){
 					if (p.getProRank() == 0){
-						p.setProRank(playerService.getMaxProRank()+1);
+						p.setProRank(9999);
 						playerService.updatePlayer(p);
 					}
-					if (playerService.getSbfRankById(p.getPlayerId(), leagueId) == null){
-						SbfRank rank = new SbfRank(1, p.getPlayerId(), newPlayerRank++);
-						playerService.insertSbfRank(rank);
-					}
 				}
-				ArrayList<SbfRank> ranksToDelete = new ArrayList<SbfRank>();
-				for (SbfRank r : playerService.getAllSbfRanks(1)){
-					if (playerService.getPlayerById(r.getPlayerId()) == null){
-						//System.out.println("DELETE RANK FOR " + r.getPlayerId());
-						ranksToDelete.add(r);
-					}
-				}
-				
-				for (SbfRank r : ranksToDelete){
-					playerService.deleteSbfRank(r);
-				}
+//				ArrayList<SbfRank> ranksToDelete = new ArrayList<SbfRank>();
+//				for (SbfRank r : playerService.getAllSbfRanks(sbfId)){
+//					if (playerService.getPlayerById(r.getPlayerId()) == null){
+//						//System.out.println("DELETE RANK FOR " + r.getPlayerId());
+//						ranksToDelete.add(r);
+//					}
+//				}
+//				
+//				for (SbfRank r : ranksToDelete){
+//					playerService.deleteSbfRank(r);
+//				}
 				
 
 				Notification.show("Player list update successfully!");;		
@@ -148,12 +157,15 @@ public class AdminView extends VerticalLayout implements View  {
 			private static final long serialVersionUID = 1L;
 			public void buttonClick(ClickEvent event) {
 				//delete current ranks
-				playerService.deleteAllSbfRanks(1);
+				playerService.deleteAllSbfRanks(sbfId);
 
 				//add default ranks based on pro ranks
 				for(Player player : playerService.getAllPlayers()){
-					SbfRank rank = new SbfRank(1, player.getPlayerId(), player.getProRank());
-					playerService.insertSbfRank(rank);
+					if(player.getProRank() < 500 && player.getProRank() != 0){
+						SbfRank rank = new SbfRank(sbfId, player.getPlayerId(), player.getProRank());
+						playerService.insertSbfRank(rank);
+					}
+					
 				}
 
 				Notification.show("Ranks updated successfully!");
@@ -188,7 +200,7 @@ public class AdminView extends VerticalLayout implements View  {
 		tradeLayout.addComponent(team2PickSelector,1,1);
 		HorizontalLayout buttonLayout = new HorizontalLayout();
 		buttonLayout.addComponents(resetPlayerList, resetMyRanks);
-		addComponents(buttonLayout, new Label("PROCESS TRADE"), tradeLayout);
+		addComponents(enableIcing, buttonLayout, new Label("PROCESS TRADE"), tradeLayout);
 	}
 
 	public ComboBox<Integer> createTradeBox(int teamId){

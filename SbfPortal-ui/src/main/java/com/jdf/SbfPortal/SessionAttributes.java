@@ -8,4 +8,5 @@ public class SessionAttributes {
 	public static final String DRAFT_SERVICE = "DRAFT_SERVICE";
 	public static final String LEAGUE_SERVICE = "LEAGUE_SERVICE";
 	public static final String LEAGUE_MANAGER = "LEAGUE_MGR";
+	public static final String ICING_ENABLED = "ICING_ENABLED";
 }

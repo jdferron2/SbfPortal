@@ -8,6 +8,8 @@ import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.jdf.SbfPortal.views.AdminView;
 import com.jdf.SbfPortal.views.CheatSheetView;
 import com.jdf.SbfPortal.views.DraftDayView;
+import com.jdf.SbfPortal.views.EditTeamsView;
+import com.jdf.SbfPortal.views.KeepersView;
 import com.jdf.SbfPortal.views.LoginView;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
@@ -33,6 +35,7 @@ public class SbfUI extends UI {
 	private VerticalLayout 		rootLayout 		= new VerticalLayout();
 	private HorizontalLayout 	menuLayout 		= new HorizontalLayout();
 	private Navigator 			navigator;	
+	boolean initialized = false;
 //	@WebServlet(value = "/*", asyncSupported = true)
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
@@ -62,6 +65,8 @@ public class SbfUI extends UI {
 		menu.addItem("Cheatsheet", menuCommand);
 		menu.addItem("Draft Day", menuCommand);
 		menu.addItem(AdminView.NAME, menuCommand);
+		menu.addItem(KeepersView.NAME, menuCommand);
+		menu.addItem(EditTeamsView.NAME, menuCommand);
 
 		Button logout = new Button("Logout");
 		logout.addClickListener(new ClickListener() {
@@ -84,6 +89,8 @@ public class SbfUI extends UI {
 		navigator.addView("Draft Day", new DraftDayView());
 		navigator.addView(LoginView.NAME, new LoginView());
 		navigator.addView(AdminView.NAME, new AdminView());
+		navigator.addView(KeepersView.NAME, new KeepersView());
+		navigator.addView(EditTeamsView.NAME, new EditTeamsView());
 		//cheatSheetView.setTableEditing(false);
 		navigator.addViewChangeListener(new ViewChangeListener() {
 
@@ -107,7 +114,11 @@ public class SbfUI extends UI {
 				} else if (isLoginView){
 					menuLayout.setVisible(false);
 				}
-
+				if(!initialized && isLoggedIn){
+					initLoginValues();
+					initialized = true;
+				}
+				
 				return true;
 			}
 		});
@@ -115,13 +126,15 @@ public class SbfUI extends UI {
 	}
 
 	protected void 	initializeSessionAttributes(){
-		getSession().setAttribute(SessionAttributes.USER_NAME, "Jeff");
-		getSession().setAttribute(SessionAttributes.SBF_ID, 1);
-		getSession().setAttribute(SessionAttributes.LEAGUE_ID, 1);
+		//getSession().setAttribute(SessionAttributes.USER_NAME, "Jeff");
+		//getSession().setAttribute(SessionAttributes.SBF_ID, 1);
+		//getSession().setAttribute(SessionAttributes.LEAGUE_ID, 1);
 		getSession().setAttribute(SessionAttributes.PLAYER_SERVICE, SbfServiceFactory.createPlayerService());
 		getSession().setAttribute(SessionAttributes.DRAFT_SERVICE, SbfServiceFactory.createDraftService());
-		getSession().setAttribute(SessionAttributes.LEAGUE_SERVICE, SbfServiceFactory.createLeagueService());
-		getSession().setAttribute(SessionAttributes.LEAGUE_MANAGER, new LeagueInfoManager());
+		getSession().setAttribute(SessionAttributes.LEAGUE_SERVICE, SbfServiceFactory.createLeagueService());	
 	}
 
+	protected void initLoginValues(){
+		getSession().setAttribute(SessionAttributes.LEAGUE_MANAGER, new LeagueInfoManager());
+	}
 }

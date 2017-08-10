@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name="sbfRanks")
-public class SbfRank {
+public class SbfRank implements Comparable{
 	protected int sbfId;
 	protected int playerId;
 	protected int rank;
@@ -51,4 +51,16 @@ public class SbfRank {
 //	public void setFlagForUpdate(boolean flagForUpdate) {
 //		this.flagForUpdate = flagForUpdate;
 //	}
+	@Override
+	public int compareTo(Object o) {
+		SbfRank compareRank = (SbfRank) o;
+		if(this.getRank() == compareRank.getRank())
+			return 0;
+		else if (this.getRank() > compareRank.getRank()){
+			return 1;
+		} else {
+			return -1;
+		}
+			
+	}
 }

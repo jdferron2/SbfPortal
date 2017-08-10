@@ -31,12 +31,28 @@ public class PlayerService {
 		}
 		return players;
 	}
+	
+	public List<Player> getTopNPlayers(int maxRank) {
+		List<Player> rankedPlayers = new ArrayList<Player>();
+		for(Player p : getAllPlayers()){
+			if (p.getProRank() < maxRank && p.getProRank() != 0) rankedPlayers.add(p);			
+		}
+		return rankedPlayers;
+	}
 
 	public List<SbfRank> getAllSbfRanks(Integer sbfId) {
 		if (sbfRanks == null) {
 			sbfRanks = sbfRankDao.getAllSbfRanks(sbfId);
 		}
 		return sbfRanks;
+	}
+	
+	public List<SbfRank> getTopNSbfRanks(int maxRank, Integer sbfId) {
+		List<SbfRank> topNRanks = new ArrayList<SbfRank>();
+		for(SbfRank r : getAllSbfRanks(sbfId)){
+			if (r.getRank() < maxRank) topNRanks.add(r);			
+		}
+		return topNRanks;
 	}
 
 	public synchronized Player getPlayerBySbfRank(int rank, int sbfId){
@@ -50,15 +66,25 @@ public class PlayerService {
 	}	
 
 	public synchronized int getMaxProRank() {
-		return getAllPlayers().stream().max(
+		Player player = getAllPlayers().stream().max(
 				(p1,p2)->Integer.compare(p1.getProRank(), p2.getProRank())
-				).get().getProRank();
+				).orElse(null);
+		if (player != null){
+			return player.getProRank();
+		}else{
+			return 0;
+		}
 	}
 
 	public synchronized int getMaxSbfRank(int sbfId) {
-		return getAllSbfRanks(sbfId).stream().max(
+		SbfRank rank = getAllSbfRanks(sbfId).stream().max(
 				(r1,r2)->Integer.compare(r1.getRank(), r2.getRank())
-				).get().getRank();
+				).orElse(null);
+		if (rank != null){
+			return rank.getRank();
+		}else{
+			return 0;
+		}
 	}	
 
 	public synchronized SbfRank getSbfRankById(int playerId, int sbfId) {
@@ -79,9 +105,13 @@ public class PlayerService {
 	}
 	
 	public synchronized void updateFlaggedRanks(){
+		if (sbfRankUpdateList==null){
+			return ;
+		}
 		for(SbfRank rank : sbfRankUpdateList){
 			sbfRankDao.updateSbfRank(rank);
 		}
+		sbfRankUpdateList=null;
 	}
 	
 	public synchronized void deleteAllPlayers(){
@@ -101,7 +131,7 @@ public class PlayerService {
 
 	public void insertSbfRank(SbfRank rank) {
 		sbfRankDao.insertSbfRank(rank);
-		sbfRanks.add(rank);
+		getAllSbfRanks(rank.getSbfId()).add(rank);
 	}
 
 	public void deleteAllSbfRanks(int sbfId) {

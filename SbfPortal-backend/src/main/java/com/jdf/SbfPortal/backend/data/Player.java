@@ -20,7 +20,6 @@ public class Player {
 	private int weight;
 	private Date dob;
 	private int proRank;
-	//private SbfRank sbfRank;
 	private String dobString;
 
 
