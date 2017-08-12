@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Random;
 
 import com.jdf.SbfPortal.SessionAttributes;
+import com.jdf.SbfPortal.UiComponents.DraftBoardPopupUI;
 import com.jdf.SbfPortal.UiComponents.DraftDisplayPopupUI;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
@@ -57,8 +58,10 @@ public class DraftDayView extends HorizontalLayout implements View {
 	private Integer sbfId;
 	private Random rand = new Random();
 	private boolean isAWinner = false;
-	DraftDisplayPopupUI test;
 	BrowserWindowOpener draftDisplayOpener;
+	
+	BrowserWindowOpener draftBoardDisplayOpener;
+	
 	private Audio PICKISINSOUND = new Audio(null, new ThemeResource("audio/pickIsInChime.mp3"));
 	Window resumeWindow = new Window("Resume Draft");
 
@@ -167,8 +170,13 @@ public class DraftDayView extends HorizontalLayout implements View {
 			draftDisplayOpener = new BrowserWindowOpener(DraftDisplayPopupUI.class);
 			draftDisplayOpener.setFeatures("Height=500, width=500");
 			draftDisplayOpener.extend(launchDraftDisplay);
+			
+			final Button launchDraftBoard = new Button("Launch Draft Board");
+			draftBoardDisplayOpener = new BrowserWindowOpener(DraftBoardPopupUI.class);
+			draftBoardDisplayOpener.setFeatures("Height=500, width=500");
+			draftBoardDisplayOpener.extend(launchDraftBoard);
 
-			bannerLayout.addComponents(PICKISINSOUND,onTheClock,pickIsInButton, launchDraftDisplay);
+			bannerLayout.addComponents(PICKISINSOUND,onTheClock,pickIsInButton, launchDraftDisplay, launchDraftBoard);
 			bannerLayout.setHeight("70px");
 			bannerLayout.setExpandRatio(PICKISINSOUND, 0);
 			bannerLayout.setExpandRatio(onTheClock, 1);
@@ -374,6 +382,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 			for(UI t : getSession().getUIs()){
 				if(t.getClass().equals(DraftDisplayPopupUI.class)){
 					((DraftDisplayPopupUI) t).processPick(isAWinner);
+				}else if(t.getClass().equals(DraftBoardPopupUI.class)){
+					SbfDraftRecord r = draftService.getSbfDraftRecordByPickNum(leagueMgr.getCurrentPick()-1, leagueId);
+					((DraftBoardPopupUI) t).addDraftSelection(r);
 				}
 			}
 			if(isAWinner){

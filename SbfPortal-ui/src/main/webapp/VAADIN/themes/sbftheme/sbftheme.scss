@@ -127,7 +127,40 @@
    display: none;
 }
 
-.loopSound{
-	loop;
+.draftGridLabel{
+	background: #d7dde5;
+	font-size: 14px;
+	font-weight: bold;
+	text-align:center;
+    padding-left:1px;
+    padding-right:1px;
+    border: 2px solid #d7dde5;
+}
+
+.bgQB{
+	background: yellow;
+}
+
+.bgRB{
+	background: green;
+	color:white;
+}
+
+.bgWR{
+	background: red;
+	color: white;
+}
+
+.bgTE{
+	background: orange;
+}
+
+.bgDEF{
+	background: pink;
+}
+
+.bgK{
+	background: blue;
+	color: white;
 }
 }
