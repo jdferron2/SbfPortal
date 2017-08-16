@@ -1,16 +1,9 @@
 package com.jdf.SbfPortal.views;
 
-import java.sql.Timestamp;
 import java.util.List;
-import java.util.Locale;
 
-import com.jdf.SbfPortal.SessionAttributes;
-import com.jdf.SbfPortal.backend.PlayerService;
-import com.jdf.SbfPortal.backend.SbfDraftService;
+import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
-import com.jdf.SbfPortal.backend.data.Player;
-import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
-import com.jdf.SbfPortal.backend.data.SbfKeeper;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.data.provider.ListDataProvider;
@@ -19,12 +12,12 @@ import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
-import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.components.grid.HeaderRow;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.themes.ValoTheme;
@@ -32,57 +25,34 @@ import com.vaadin.ui.themes.ValoTheme;
 @SuppressWarnings("serial")
 public class EditTeamsView extends VerticalLayout implements View {
 	public static final String NAME = "Edit Teams";
-	private SbfDraftService draftService;
-	private PlayerService playerService;
+
 	private SbfLeagueService leagueService;
-	private LeagueInfoManager leagueMgr;
+
 	private ListDataProvider<SbfTeam> teamsDataProvider;
-	
+
 	private Integer leagueId;
-	private Integer sbfId;	
 	private boolean viewBuilt = false;
-	private String playerNameFilterValue="";
-	
+
+
 	private Grid<SbfTeam> teamsGrid;
-	
+
 	List<SbfTeam> teamList;
-	
+
 	@Override
 	public void enter(ViewChangeEvent event) {
-		if(playerService==null){
-			playerService = 
-					(PlayerService) UI.getCurrent().getSession().getAttribute(SessionAttributes.PLAYER_SERVICE);
-		}
-		if(draftService==null){
-			draftService = 
-					(SbfDraftService) UI.getCurrent().getSession().getAttribute(SessionAttributes.DRAFT_SERVICE);
-		}
-		if(leagueService==null){
-			leagueService = 
-					(SbfLeagueService) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_SERVICE);
-		}
-		if(leagueMgr==null){
-			leagueMgr =
-					(LeagueInfoManager) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_MANAGER);
-		}
-		if(leagueId == null){
-			leagueId = 
-					(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_ID);
-		}
-		if(sbfId == null){
-			sbfId = 
-					(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SBF_ID);
-		}
+		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
+		leagueService = UserSessionVars.getLeagueService();
+
 		if (!viewBuilt) {
 			buildView();
 			viewBuilt=true;
 		}
-		
+
 	}
-	
+
 	void buildView(){
-		teamList =  leagueService.getAllSbfTeams(leagueId);
-		
+		teamList =  leagueService.getAllSbfTeamsForLeague(leagueId);
+
 		teamsGrid = configureTeamGrid(teamList);
 
 		final HorizontalLayout layout = new HorizontalLayout();
@@ -91,11 +61,11 @@ public class EditTeamsView extends VerticalLayout implements View {
 		layout.setSpacing(false);
 		layout.addComponents(teamsGrid);
 		setSizeFull();
-		
+
 		addComponents(layout);
 		setExpandRatio(layout, 1);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Grid<SbfTeam> configureTeamGrid(List<SbfTeam> teams){
 		teamsGrid = new Grid<>();
@@ -119,7 +89,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 		return teamsGrid;
 
 	}
-	
+
 	@SuppressWarnings({ "rawtypes" })
 	private ButtonRenderer editButtonRenderer (){
 		ButtonRenderer<Object> editButtonRenderer = new ButtonRenderer<Object>();
@@ -129,12 +99,12 @@ public class EditTeamsView extends VerticalLayout implements View {
 		});
 		return editButtonRenderer;
 	}
-	
+
 	private boolean teamsGridFilter(SbfTeam t){
 		//Place holder
 		return true;
 	}
-	
+
 
 
 	private Window getEditTeamWindow(SbfTeam t){
@@ -150,20 +120,20 @@ public class EditTeamsView extends VerticalLayout implements View {
 		teamNameTextField.setWidth("100%");
 		teamNameTextField.addStyleName(ValoTheme.TEXTFIELD_TINY);
 		teamNameTextField.setValue(teamName);
-		
+
 		TextField ownerName = new TextField();
 		ownerName.setWidth("100%");
 		ownerName.addStyleName(ValoTheme.TEXTFIELD_TINY);
 		ownerName.setValue(t.getOwnerName());
-		
+
 		subContent.setMargin(true);
 		ComboBox<Integer> draftSlotCB =
-			    new ComboBox<>("Draft Slot");
+				new ComboBox<>("Draft Slot");
 		draftSlotCB.setItems(draftSlots);
 		draftSlotCB.setValue(t.getDraftSlot());
-		
 
-		
+
+
 		Button submitButton = new Button("Submit");
 		submitButton.addClickListener(new Button.ClickListener()
 		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
@@ -181,21 +151,21 @@ public class EditTeamsView extends VerticalLayout implements View {
 			if(ownerName.getValue() != null && !ownerName.getValue().equals("")){
 				t.setOwnerName(ownerName.getValue());
 			}
-			
+
 			leagueService.updateSbfTeam(t);
 			if (t2!=null) leagueService.updateSbfTeam(t2);
 			teamsDataProvider.refreshAll();
 			subWindow.close();
-					
+
 		} });
-		
+
 		subContent.addComponents(teamNameTextField, ownerName, draftSlotCB, submitButton);
 		subWindow.setContent(subContent);
 		subWindow.center();
-		
-	//	subWindow.setClosable(false);
+
+		//	subWindow.setClosable(false);
 		return subWindow;
-		
+
 	}
-	
+
 }

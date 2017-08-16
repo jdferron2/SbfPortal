@@ -29,7 +29,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			e.printStackTrace();
 		}
 	}
-	public List<SbfRank> getAllSbfRanks(Integer sbfId) {
+	public List<SbfRank> getAllSbfRanks(Integer rankSetId) {
 		List<SbfRank> sbfRanks = new ArrayList<SbfRank>();
 		Statement stmt=null;
 		ResultSet rs=null;
@@ -39,13 +39,13 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "SBF_ID, PLAYER_ID, RANK "
+					+ "RANK_SET_ID, PLAYER_ID, RANK "
 					+ "from SBF_RANKS "
-					+ "where SBF_ID = " + sbfId;
+					+ "where RANK_SET_ID = " + rankSetId;
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
-				SbfRank rank = new SbfRank(rs.getInt("SBF_ID"),
+				SbfRank rank = new SbfRank(rs.getInt("RANK_SET_ID"),
 						rs.getInt("PLAYER_ID"),
 						rs.getInt("RANK"));			
 				sbfRanks.add(rank);    				
@@ -74,12 +74,12 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_ranks "
-					+ "(player_id, sbf_id, rank) "
+					+ "(player_id, rank_set_id, rank) "
 					+ "values (?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, s.getPlayerId());
-			prepStmt.setInt(2, s.getSbfId());
+			prepStmt.setInt(2, s.getRankSetId());
 			prepStmt.setInt(3, s.getRank());	
 			prepStmt.execute();
 		} catch (Exception ex) {
@@ -105,9 +105,9 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = ds.getConnection();
 
 			String sql = "delete from sbf_ranks "
-					+ "where sbf_id = ? and player_id = ?";
+					+ "where rank_set_id = ? and player_id = ?";
 			prepStmt = conn.prepareStatement(sql);
-			prepStmt.setInt(1, s.getSbfId());
+			prepStmt.setInt(1, s.getRankSetId());
 			prepStmt.setInt(2, s.getPlayerId());
 			prepStmt.execute();
 		} catch (Exception ex) {
@@ -134,10 +134,10 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			String sql = "update sbf_ranks set "
 					+ "rank = ? "
-					+ "where sbf_id = ? and player_id = ?";
+					+ "where rank_set_id = ? and player_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, rank.getRank());
-			prepStmt.setInt(2, rank.getSbfId());
+			prepStmt.setInt(2, rank.getRankSetId());
 			prepStmt.setInt(3, rank.getPlayerId());
 			prepStmt.execute();
 		} catch (Exception ex) {
@@ -156,16 +156,16 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 		}	
 	}
 
-	public synchronized void deleteAllSbfRanks(int sbfId) {
+	public synchronized void deleteAllSbfRanks(int userId) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
 			String sql = "delete from sbf_ranks "
-					+ "where sbf_id = ?";
+					+ "where USER_ID = ?";
 			prepStmt = conn.prepareStatement(sql);
-			prepStmt.setInt(1, sbfId);
+			prepStmt.setInt(1, userId);
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());

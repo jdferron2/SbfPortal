@@ -1,42 +1,39 @@
 package com.jdf.SbfPortal;
 
 import javax.annotation.Resource;
-import javax.servlet.annotation.WebServlet;
 
-import com.jdf.SbfPortal.backend.SbfServiceFactory;
-import com.jdf.SbfPortal.utility.LeagueInfoManager;
-import com.jdf.SbfPortal.views.AdminView;
+import com.jdf.SbfPortal.authentication.AccessControl;
+import com.jdf.SbfPortal.authentication.BasicAccessControl;
+import com.jdf.SbfPortal.authentication.LoginScreen;
+import com.jdf.SbfPortal.authentication.LoginScreen.LoginListener;
+import com.jdf.SbfPortal.authentication.UserSessionVars;
+import com.jdf.SbfPortal.backend.utility.Broadcaster;
+import com.jdf.SbfPortal.utility.MessageHandler;
 import com.jdf.SbfPortal.views.CheatSheetView;
-import com.jdf.SbfPortal.views.DraftDayView;
-import com.jdf.SbfPortal.views.EditTeamsView;
-import com.jdf.SbfPortal.views.KeepersView;
-import com.jdf.SbfPortal.views.LoginView;
+import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.navigator.Navigator;
-import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.navigator.View;
+import com.vaadin.server.Responsive;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.Button.ClickListener;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.MenuBar;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.MenuBar.Command;
 import com.vaadin.ui.MenuBar.MenuItem;
 import com.vaadin.ui.UI;
-import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.themes.ValoTheme;
 
 @SuppressWarnings("serial")
 @Theme("sbftheme") 
-public class SbfUI extends UI {
-	private VerticalLayout 		viewLayout 		= new VerticalLayout();
-	private VerticalLayout 		rootLayout 		= new VerticalLayout();
-	private HorizontalLayout 	menuLayout 		= new HorizontalLayout();
+@Push
+public class SbfUI extends UI implements Broadcaster.BroadcastListener{
+	private AccessControl accessControl = new BasicAccessControl();
 	private Navigator 			navigator;	
 	boolean initialized = false;
-//	@WebServlet(value = "/*", asyncSupported = true)
+	private MessageHandler handler;
+	public View currentView;
+
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
 	public static class Servlet extends VaadinServlet {
@@ -52,89 +49,60 @@ public class SbfUI extends UI {
 
 	@Override
 	protected void init(VaadinRequest request) {
-		initializeSessionAttributes();
-		setSizeFull();
-		CheatSheetView cheatSheetView =  new CheatSheetView();
-		setContent(rootLayout);
-		viewLayout.setMargin(false);
-		viewLayout.setSizeFull();
-		rootLayout.setSpacing(false);
-		rootLayout.setSizeFull();
-		menuLayout.setWidth("100%");
-		MenuBar menu = new MenuBar();
-		menu.addItem("Cheatsheet", menuCommand);
-		menu.addItem("Draft Day", menuCommand);
-		menu.addItem(AdminView.NAME, menuCommand);
-		menu.addItem(KeepersView.NAME, menuCommand);
-		menu.addItem(EditTeamsView.NAME, menuCommand);
+		Broadcaster.register(this);
+		UserSessionVars.setAccessControl(accessControl);
+		handler = new MessageHandler(this.getSession());
+		Responsive.makeResponsive(this);
+		getPage().setTitle("SBF");
+		if (!accessControl.isUserSignedIn()) {
+			setContent(new LoginScreen(accessControl, new LoginListener() {
+				@Override
+				public void loginSuccessful() {
+					showMainView();
+				}
+			}));
+		} else {
+			showMainView();
+		}
+	}
 
-		Button logout = new Button("Logout");
-		logout.addClickListener(new ClickListener() {
-			private static final long serialVersionUID = 1L;
-			public void buttonClick(ClickEvent event) {
-				//navigate to root and close session
-				getSession().close();
-				getUI().getPage().setLocation("/SbfPortal-ui/?restartApplication" );	
-			}
-
-		});
-
-		menuLayout.addComponents(menu, logout);
-		menuLayout.setComponentAlignment(logout, Alignment.MIDDLE_RIGHT);
-		rootLayout.addComponents(menuLayout,viewLayout);
-		rootLayout.setExpandRatio(viewLayout, 1f);
-
-		navigator = new Navigator(this,viewLayout);
-		navigator.addView("", cheatSheetView);
-		navigator.addView("Draft Day", new DraftDayView());
-		navigator.addView(LoginView.NAME, new LoginView());
-		navigator.addView(AdminView.NAME, new AdminView());
-		navigator.addView(KeepersView.NAME, new KeepersView());
-		navigator.addView(EditTeamsView.NAME, new EditTeamsView());
-		//cheatSheetView.setTableEditing(false);
-		navigator.addViewChangeListener(new ViewChangeListener() {
-
+	@Override
+	public void receiveBroadcast(String message) {
+		UI.getCurrent().access(new Runnable() {
 			@Override
-			public boolean beforeViewChange(ViewChangeEvent event) {
-
-				boolean isLoggedIn = getSession().getAttribute(SessionAttributes.USER_NAME) != null;
-				boolean isLoginView = (event.getNewView() instanceof LoginView);
-				menuLayout.setVisible(true);
-
-				if (!isLoggedIn && !isLoginView) {
-					// Redirect to login view always if a user has not yet
-					// logged in
-					getNavigator().navigateTo(LoginView.NAME);
-					return false;
-
-				} else if (isLoggedIn && isLoginView) {
-					// If someone tries to access to login view while logged in,
-					// then cancel
-					return false;
-				} else if (isLoginView){
-					menuLayout.setVisible(false);
-				}
-				if(!initialized && isLoggedIn){
-					initLoginValues();
-					initialized = true;
-				}
-				
-				return true;
+			public void run() {
+				// Show it somehow
+				System.out.println("Received a message!!!! " + message);
 			}
 		});
-		navigator.navigateTo("");
+
 	}
 
-	protected void 	initializeSessionAttributes(){
-		//getSession().setAttribute(SessionAttributes.USER_NAME, "Jeff");
-		//getSession().setAttribute(SessionAttributes.SBF_ID, 1);
-		//getSession().setAttribute(SessionAttributes.LEAGUE_ID, 1);
-		getSession().setAttribute(SessionAttributes.PLAYER_SERVICE, SbfServiceFactory.createPlayerService());
-		getSession().setAttribute(SessionAttributes.DRAFT_SERVICE, SbfServiceFactory.createDraftService());
-		getSession().setAttribute(SessionAttributes.LEAGUE_SERVICE, SbfServiceFactory.createLeagueService());	
+
+	@Override
+	public void receiveBroadcast(VaadinSession ses, String command, Object obj) {
+		access(new Runnable() {
+			@Override
+			public void run() {
+				handler.processMessage(ses, command, obj);
+			}
+		});
 	}
 
-	protected void initLoginValues(){
-		getSession().setAttribute(SessionAttributes.LEAGUE_MANAGER, new LeagueInfoManager());
+	@Override
+	public void detach() {
+		Broadcaster.unregister(this);
+		super.detach();
 	}
+
+	protected void showMainView() {
+		addStyleName(ValoTheme.UI_WITH_MENU);
+		setContent(new MainScreen(SbfUI.this));
+		if (getNavigator().getState().equals("")){
+			getNavigator().navigateTo(CheatSheetView.NAME);
+		}else{
+			getNavigator().navigateTo(getNavigator().getState());
+		}
+	}
+
 }

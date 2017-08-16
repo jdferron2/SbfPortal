@@ -1,25 +1,33 @@
 package com.jdf.SbfPortal.backend;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.jdf.SbfPortal.backend.DAO.PlayerDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfRankDAO;
+import com.jdf.SbfPortal.backend.DAO.SbfRankSetsDAO;
 import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.SbfRank;
+import com.jdf.SbfPortal.backend.data.SbfRankSet;
 
 //@Path("/PlayerService") 
 
 public class PlayerService {
 	private List<Player> players;
-	private List<SbfRank> sbfRanks;
+	//private List<SbfRank> sbfRanks;
 	private List<SbfRank> sbfRankUpdateList;
+	private List<SbfRankSet> sbfRankSets;
+	private HashMap<Integer, List<SbfRank>> sbfRanksLookup = new HashMap<Integer, List<SbfRank>>();
 	private PlayerDAO playerDao;
 	private SbfRankDAO sbfRankDao;
+	
+	private SbfRankSetsDAO sbfRankSetsDao;
 
-	PlayerService(PlayerDAO pDao, SbfRankDAO sDao){
+	PlayerService(PlayerDAO pDao, SbfRankDAO sDao, SbfRankSetsDAO rsDao){
 		this.playerDao = pDao;
 		this.sbfRankDao = sDao;
+		this.sbfRankSetsDao = rsDao;
 	}
 
 	//	@GET 
@@ -40,24 +48,31 @@ public class PlayerService {
 		return rankedPlayers;
 	}
 
-	public List<SbfRank> getAllSbfRanks(Integer sbfId) {
-		if (sbfRanks == null) {
-			sbfRanks = sbfRankDao.getAllSbfRanks(sbfId);
+	public List<SbfRank> getAllSbfRanks(Integer rankSetId) {
+		if(!sbfRanksLookup.containsKey(rankSetId)){
+			sbfRanksLookup.put(rankSetId, sbfRankDao.getAllSbfRanks(rankSetId));
 		}
-		return sbfRanks;
+		return sbfRanksLookup.get(rankSetId);
 	}
 	
-	public List<SbfRank> getTopNSbfRanks(int maxRank, Integer sbfId) {
+	public List<SbfRankSet> getAllSbfRankSets(Integer userId) {
+		if (sbfRankSets == null) {
+			sbfRankSets = sbfRankSetsDao.getAllSbfRankSets(userId);
+		}
+		return sbfRankSets;
+	}
+	
+	public List<SbfRank> getTopNSbfRanks(int maxRank, Integer rankSetId) {
 		List<SbfRank> topNRanks = new ArrayList<SbfRank>();
-		for(SbfRank r : getAllSbfRanks(sbfId)){
+		for(SbfRank r : getAllSbfRanks(rankSetId)){
 			if (r.getRank() < maxRank) topNRanks.add(r);			
 		}
 		return topNRanks;
 	}
 
-	public synchronized Player getPlayerBySbfRank(int rank, int sbfId){
+	public synchronized Player getPlayerBySbfRank(int rank, int rankSetId){
 		return getAllPlayers().stream().filter(
-				p->getSbfRankById(p.getPlayerId(), sbfId).getRank()==rank).findFirst().orElse(null);
+				p->getSbfRankById(p.getPlayerId(), rankSetId).getRank()==rank).findFirst().orElse(null);
 	}
 
 	public synchronized Player getPlayerById(int playerId) {
@@ -76,8 +91,8 @@ public class PlayerService {
 		}
 	}
 
-	public synchronized int getMaxSbfRank(int sbfId) {
-		SbfRank rank = getAllSbfRanks(sbfId).stream().max(
+	public synchronized int getMaxSbfRank(int rankSetId) {
+		SbfRank rank = getAllSbfRanks(rankSetId).stream().max(
 				(r1,r2)->Integer.compare(r1.getRank(), r2.getRank())
 				).orElse(null);
 		if (rank != null){
@@ -87,13 +102,13 @@ public class PlayerService {
 		}
 	}	
 
-	public synchronized SbfRank getSbfRankById(int playerId, int sbfId) {
-		return getAllSbfRanks(sbfId).stream().filter(
+	public synchronized SbfRank getSbfRankById(int playerId, int rankSetId) {
+		return getAllSbfRanks(rankSetId).stream().filter(
 				s->s.getPlayerId()==playerId).findFirst().orElse(null);
 	}
 	
-	public synchronized SbfRank getSbfRankObjByRank(int rank, int sbfId){
-		return getAllSbfRanks(sbfId).stream().filter(
+	public synchronized SbfRank getSbfRankObjByRank(int rank, int rankSetId){
+		return getAllSbfRanks(rankSetId).stream().filter(
 				s->s.getRank()==rank).findFirst().orElse(null);
 	}
 	
@@ -131,20 +146,35 @@ public class PlayerService {
 
 	public void insertSbfRank(SbfRank rank) {
 		sbfRankDao.insertSbfRank(rank);
-		getAllSbfRanks(rank.getSbfId()).add(rank);
+		getAllSbfRanks(rank.getRankSetId()).add(rank);
 	}
 
-	public void deleteAllSbfRanks(int sbfId) {
-		for (SbfRank r : getAllSbfRanks(sbfId)){
+	public void deleteAllSbfRanks(int rankSetId) {
+		for (SbfRank r : getAllSbfRanks(rankSetId)){
 			sbfRankDao.deleteSbfRank(r);
 		}
-		sbfRanks = null;
+		sbfRanksLookup.remove(rankSetId);
 	}
 	
 	public void deleteSbfRank(SbfRank r){
 		sbfRankDao.deleteSbfRank(r);
-		sbfRanks.remove(r);
+		sbfRanksLookup.get(r.getRankSetId()).remove(r);
 	}
 	
+	public synchronized SbfRankSet getGlobalDefaultRankSet() {
+		return sbfRankSetsDao.getAllSbfRankSets(0).stream().filter(
+				s->s.getRankSetId()==0).findFirst().orElse(null);
+	}
+	
+	public synchronized SbfRankSet getSbfRankSetByIdAndUser(int rankSetId, int userId) {
+		return getAllSbfRankSets(userId).stream().filter(
+				s->s.getRankSetId()==rankSetId).findFirst().orElse(null);
+	}
+	
+	
+	public void insertSbfRankSet(SbfRankSet s){
+		sbfRankSetsDao.insertSbfRankSet(s);
+		getAllSbfRankSets(s.getUserId()).add(s);
+	}
 
 }

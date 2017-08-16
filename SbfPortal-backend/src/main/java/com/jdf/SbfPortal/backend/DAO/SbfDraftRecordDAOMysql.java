@@ -44,13 +44,13 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "SBF_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS "
+					+ "TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS "
 					+ "from SBF_DRAFT where LEAGUE_ID = " + leagueId;
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
 				SbfDraftRecord drafRecord = new SbfDraftRecord(leagueId, 
-						rs.getInt("SBF_ID"),
+						rs.getInt("TEAM_ID"),
 						rs.getInt("PLAYER_ID"),
 						rs.getInt("SLOT_DRAFTED"),
 						rs.getTimestamp("DRAFTED_TS")
@@ -81,12 +81,12 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 		try {
 			conn = ds.getConnection();
 
-			String sql = "insert into SBF_DRAFT (LEAGUE_ID, SBF_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS) "
+			String sql = "insert into SBF_DRAFT (LEAGUE_ID, TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS) "
 					+ "values (?,?,?,?,?)";
 
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, record.getLeagueId());
-			prepStmt.setInt(2, record.getSbfId());
+			prepStmt.setInt(2, record.getTeamId());
 			prepStmt.setInt(3, record.getPlayerId());
 			prepStmt.setInt(4, record.getSlotDrafted());
 			prepStmt.setTimestamp(5, new Timestamp(record.getTimeDrafted().getTime()));
@@ -115,11 +115,11 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 			conn = ds.getConnection();
 
 			String sql = "DELETE FROM SBF_DRAFT "
-					+ "WHERE SBF_ID = ? and PLAYER_ID = ? and LEAGUE_ID = ?";
+					+ "WHERE TEAM_ID = ? and PLAYER_ID = ? and LEAGUE_ID = ?";
 
 			prepStmt = conn.prepareStatement(sql);
 
-			prepStmt.setInt(1, record.getSbfId());
+			prepStmt.setInt(1, record.getTeamId());
 			prepStmt.setInt(2, record.getPlayerId());
 			prepStmt.setInt(3, record.getLeagueId());
 			prepStmt.execute();

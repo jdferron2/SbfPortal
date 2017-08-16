@@ -7,17 +7,19 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class SbfTeam {
 	private String ownerName;
 	private int draftSlot;
-	private int sbfId;
+	private int teamId;
 	private int leagueId;
 	private String teamName;
+	private int userId;
 	
 	public SbfTeam() {}
-	public SbfTeam(int leagueId, String owner, int draftPosition, int id, String teamName){
+	public SbfTeam(int leagueId, String owner, int draftPosition, int id, String teamName, int userId){
 		this.leagueId = leagueId;
 		this.ownerName = owner;
 		this.draftSlot = draftPosition;
-		this.sbfId = id;
+		this.teamId = id;
 		this.teamName = teamName;
+		this.setUserId(userId);
 	}
 	
 	public String getOwnerName() {
@@ -34,11 +36,11 @@ public class SbfTeam {
 		this.draftSlot = draftPosition;
 	}
 	
-	public int getSbfId() {
-		return sbfId;
+	public int getTeamId() {
+		return teamId;
 	}
-	public void setSbfId(int sbfId) {
-		this.sbfId = sbfId;
+	public void setTeamId(int teamId) {
+		this.teamId = teamId;
 	}
 	public int getLeagueId() {
 		return leagueId;
@@ -51,6 +53,12 @@ public class SbfTeam {
 	}
 	public void setTeamName(String teamName) {
 		this.teamName = teamName;
+	}
+	public int getUserId() {
+		return userId;
+	}
+	public void setUserId(int userId) {
+		this.userId = userId;
 	}
 
 }

@@ -9,25 +9,25 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name="sbfRanks")
 public class SbfRank implements Comparable{
-	protected int sbfId;
+	protected int rankSetId;
 	protected int playerId;
 	protected int rank;
 	protected boolean flagForUpdate;
 	
 	public SbfRank(){
 	}
-	public SbfRank(int sbfId, int playerId, int rank){
-		this.sbfId = sbfId;
+	public SbfRank(int rankSetId, int playerId, int rank){
+		this.rankSetId = rankSetId;
 		this.playerId = playerId;
 		this.rank=rank;
 	}
 	
-	@XmlElement (name="sbfId")
-	public int getSbfId() {
-		return sbfId;
+	@XmlElement (name="rankSetId")
+	public int getRankSetId() {
+		return rankSetId;
 	}
-	public void setSbfId(int sbfId) {
-		this.sbfId = sbfId;
+	public void setRankSetId(int rankSetId) {
+		this.rankSetId = rankSetId;
 	}
 	
 	@XmlElement (name="playerId")

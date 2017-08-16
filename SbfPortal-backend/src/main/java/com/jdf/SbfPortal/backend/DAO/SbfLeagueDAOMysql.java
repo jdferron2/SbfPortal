@@ -41,14 +41,15 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 			conn = ds.getConnection();
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "LEAGUE_ID, LEAGUE_NAME, NUM_TEAMS "
+					+ "LEAGUE_ID, LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER "
 					+ "from SBF_LEAGUE";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
 				SbfLeague league = new SbfLeague(rs.getInt("LEAGUE_ID"),
 						rs.getString("LEAGUE_NAME"),
-						rs.getInt("NUM_TEAMS")
+						rs.getInt("NUM_TEAMS"),
+						rs.getInt("LEAGUE_MANAGER")
 						);
 				sbfLeagues.add(league);    				
 			}

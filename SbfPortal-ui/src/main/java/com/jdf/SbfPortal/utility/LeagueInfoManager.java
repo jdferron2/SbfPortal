@@ -4,22 +4,26 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.jdf.SbfPortal.SessionAttributes;
+import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.Player;
-import com.jdf.SbfPortal.backend.data.SbfDraftPick;
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
+import com.jdf.SbfPortal.backend.data.SbfLeague;
+import com.jdf.SbfPortal.backend.data.SbfPickTrade;
 import com.jdf.SbfPortal.backend.data.SbfRank;
+import com.jdf.SbfPortal.backend.data.SbfRankSet;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
-import com.vaadin.ui.UI;
+import com.jdf.SbfPortal.backend.data.SbfUser;
+import com.jdf.SbfPortal.backend.data.SbfUserTeam;
 
 public class LeagueInfoManager {
 	public static final int	NUMBER_OF_TEAMS = 12;
 	public static final int	NUMBER_OF_ROUNDS =17;
-	Integer leagueId;
-	Integer sbfId;
+	//	Integer leagueId;
+	//	Integer sbfId;
+	//	Integer UserSessionVars.getRankSet().getRankSetId();
 	PlayerService playerService;
 	SbfDraftService draftService;
 	SbfLeagueService leagueService;
@@ -29,11 +33,11 @@ public class LeagueInfoManager {
 	}
 
 	private void initialize(){
-		sbfId = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SBF_ID);
-		leagueId = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_ID);
-		playerService = (PlayerService) UI.getCurrent().getSession().getAttribute(SessionAttributes.PLAYER_SERVICE);
-		draftService = (SbfDraftService) UI.getCurrent().getSession().getAttribute(SessionAttributes.DRAFT_SERVICE);
-		leagueService = (SbfLeagueService) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_SERVICE);
+		draftService = UserSessionVars.getDraftService();
+		leagueService = UserSessionVars.getLeagueService();
+		playerService = UserSessionVars.getPlayerService();
+		//leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
+		//UserSessionVars.getRankSet().getRankSetId() = UserSessionVars.getRankSet().getRankSetId();
 	}
 
 	//	public void saveLeagueInfo(){
@@ -51,9 +55,9 @@ public class LeagueInfoManager {
 
 	public synchronized int getCurrentPick(){
 		int currentPick = 1;
-		List<SbfDraftRecord> draftList = new ArrayList<>(draftService.getAllDraftRecords(leagueId));
+		List<SbfDraftRecord> draftList = new ArrayList<>(draftService.getAllDraftRecords(UserSessionVars.getCurrentLeague().getLeagueId()));
 		draftList.sort((s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted()));
-		if (draftService.getAllDraftRecords(leagueId).isEmpty()) return 1;
+		if (draftService.getAllDraftRecords(UserSessionVars.getCurrentLeague().getLeagueId()).isEmpty()) return 1;
 		for (SbfDraftRecord rec : draftList){
 			if(rec.getSlotDrafted() > currentPick){
 				return currentPick;
@@ -61,9 +65,9 @@ public class LeagueInfoManager {
 			currentPick++;
 		}
 		return currentPick;
-//		return draftService.getAllDraftRecords(leagueId).stream().max(
-//				(s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted())
-//				).get().getSlotDrafted() + 1;
+		//		return draftService.getAllDraftRecords(leagueId).stream().max(
+		//				(s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted())
+		//				).get().getSlotDrafted() + 1;
 	}
 	public synchronized int getRound(){
 		return getRound(getCurrentPick());
@@ -98,50 +102,52 @@ public class LeagueInfoManager {
 		}else{
 			startingDraftSlot = getPickInRound();
 		}
-		Integer ownerId = draftService.getPickOwnerId(getCurrentPick(), leagueId);
+		Integer ownerId = draftService.getPickOwnerId(getCurrentPick(), UserSessionVars.getCurrentLeague().getLeagueId());
 		if (ownerId != null){
-			return leagueService.getSbfTeamBySbfId(ownerId, leagueId);
+			return leagueService.getSbfTeamByTeamId(ownerId, UserSessionVars.getCurrentLeague().getLeagueId());
 		}
 
-		for (SbfTeam currentTeam : leagueService.getAllSbfTeams(leagueId)){
+		for (SbfTeam currentTeam : leagueService.getAllSbfTeamsForLeague(UserSessionVars.getCurrentLeague().getLeagueId())){
 			if (currentTeam.getDraftSlot() == startingDraftSlot) return currentTeam;
 		}
 		return null;
 	}
 
 	public synchronized void undoLastDraftPick(){
-		if (draftService.getAllDraftRecords(leagueId).isEmpty()) return;
+		if (draftService.getAllDraftRecords(UserSessionVars.getCurrentLeague().getLeagueId()).isEmpty()) return;
 		SbfDraftRecord lastDraftedPlayer = 
-				draftService.getAllDraftRecords(leagueId).stream().max(
+				draftService.getAllDraftRecords(UserSessionVars.getCurrentLeague().getLeagueId()).stream().max(
 						(s1,s2)->Integer.compare(s1.getSlotDrafted(), s2.getSlotDrafted())
 						).get();
 		draftService.deleteSbfDraftRecord(lastDraftedPlayer);
 	}
 
-	public synchronized void draftPlayer(Player player, int leagueId){
+	public synchronized SbfDraftRecord draftPlayer(Player player, int leagueId){
 		if (draftService.getSbfDraftRecordByPlayerId(player.getPlayerId(), leagueId) == null){
 			SbfDraftRecord draftRecord = new SbfDraftRecord(
 					leagueId,
-					getTeamOnTheClock().getSbfId(),player.getPlayerId(),
+					getTeamOnTheClock().getTeamId(),player.getPlayerId(),
 					getCurrentPick(),new Timestamp(System.currentTimeMillis()));
 			draftService.addSbfDraftRecord(draftRecord);
+			return draftRecord;
 		}
+		return null;
 	}
-	
+
 	public synchronized void movePlayerUp(Player player){
-		SbfRank sbfRank = playerService.getSbfRankById(player.getPlayerId(), sbfId);
+		SbfRank sbfRank = playerService.getSbfRankById(player.getPlayerId(), UserSessionVars.getRankSet().getRankSetId());
 		int newRank = sbfRank.getRank()-1;
 		if (newRank < 1) return;
 		Player existingPlayer;
-		if ((existingPlayer=playerService.getPlayerBySbfRank(newRank, sbfId)) != null){
-			playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId).setRank(newRank+1);
-			playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId));
+		if ((existingPlayer=playerService.getPlayerBySbfRank(newRank, UserSessionVars.getRankSet().getRankSetId())) != null){
+			playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()).setRank(newRank+1);
+			playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()));
 		}else{
 			for(int i = newRank; i>0; i--){//player added that wasnt ranked and given 1000 default rank
-				existingPlayer=playerService.getPlayerBySbfRank(i, sbfId);
+				existingPlayer=playerService.getPlayerBySbfRank(i, UserSessionVars.getRankSet().getRankSetId());
 				if (existingPlayer != null){
-					playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId).setRank(i+1);
-					playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId));
+					playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()).setRank(i+1);
+					playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()));
 					newRank = i;
 					break;
 				}
@@ -150,11 +156,11 @@ public class LeagueInfoManager {
 		sbfRank.setRank(newRank);
 		playerService.addRankToUpdateList(sbfRank);
 	}
-	
+
 	public synchronized void setNewRankValue(SbfRank rank, int newRank){
 		if (newRank <= 0) return;
-		
-		SbfRank oldRank = playerService.getSbfRankObjByRank(newRank, sbfId);
+
+		SbfRank oldRank = playerService.getSbfRankObjByRank(newRank, UserSessionVars.getRankSet().getRankSetId());
 		oldRank.setRank(rank.getRank());
 		rank.setRank(newRank);
 
@@ -163,23 +169,23 @@ public class LeagueInfoManager {
 	}
 
 	public synchronized void movePlayerDown(Player player){
-		SbfRank sbfRank = playerService.getSbfRankById(player.getPlayerId(),sbfId);
+		SbfRank sbfRank = playerService.getSbfRankById(player.getPlayerId(),UserSessionVars.getRankSet().getRankSetId());
 		int newRank = sbfRank.getRank()+1;
 		if (newRank < 1) return;
 		Player existingPlayer;
-		if ((existingPlayer=playerService.getPlayerBySbfRank(newRank, sbfId)) != null){
-			playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId).setRank(newRank-1);
-			playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), sbfId));
+		if ((existingPlayer=playerService.getPlayerBySbfRank(newRank, UserSessionVars.getRankSet().getRankSetId())) != null){
+			playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()).setRank(newRank-1);
+			playerService.addRankToUpdateList(playerService.getSbfRankById(existingPlayer.getPlayerId(), UserSessionVars.getRankSet().getRankSetId()));
 		}
 		sbfRank.setRank(newRank);
 		playerService.addRankToUpdateList(sbfRank);
 	}
 
 	public synchronized List<Integer> getPicksForTeam(int teamId){
-		List<SbfDraftPick> extraPicks = draftService.getAllSbfDraftPicks(leagueId);
-		SbfTeam team = leagueService.getSbfTeamBySbfId(teamId, leagueId);
+		List<SbfPickTrade> pickTrades = draftService.getAllSbfPickTrades(UserSessionVars.getCurrentLeague().getLeagueId());
+		SbfTeam team = leagueService.getSbfTeamByTeamId(teamId, UserSessionVars.getCurrentLeague().getLeagueId());
 		int numTeams = leagueService
-				.getLeagueById(leagueId)
+				.getLeagueById(UserSessionVars.getCurrentLeague().getLeagueId())
 				.getNumTeams();
 
 		ArrayList<Integer> picks = new ArrayList<Integer>();
@@ -191,33 +197,54 @@ public class LeagueInfoManager {
 			}else{
 				currentPick = (i-1)*numTeams + team.getDraftSlot();
 			}
-			testTeamId = draftService.getPickOwnerId(currentPick, leagueId);
+			testTeamId = draftService.getPickOwnerId(currentPick, UserSessionVars.getCurrentLeague().getLeagueId());
 			if(testTeamId == null || testTeamId == teamId){
 				picks.add(currentPick);	
 			}
 		}
-		for(SbfDraftPick pick : extraPicks){
-			if(!picks.contains(pick.getPick()) && pick.getSbfId() == teamId){
-				picks.add(pick.getPick());
+		for(SbfPickTrade pickTrade : pickTrades){
+			if(!picks.contains(pickTrade.getPick())){
+				if(teamId == draftService.getPickOwnerId(pickTrade.getPick(), UserSessionVars.getCurrentLeague().getLeagueId())){
+					picks.add(pickTrade.getPick());
+				}
 			}
 		}
 		picks.sort((p1,p2)->Integer.compare(p1, p2));
 		return picks;
 	}
 
-	public void addPickToTeam(SbfTeam team, int leagueId, Integer pick) {
-		SbfDraftPick sbfDraftPick = draftService.getPickBySbfIdPick(pick, leagueId);
-		if(sbfDraftPick != null){
-			//pick already traded at some point, update the record to point to the new team
-			sbfDraftPick.setSbfId(team.getSbfId());
-			draftService.updateSbfDraftPick(sbfDraftPick);
-		}else{
-			//pick was with original owner, create a new record
-			sbfDraftPick = new SbfDraftPick(
-					leagueId,
-					team.getSbfId(), 
-					pick);
-			draftService.addSbfDraftPick(sbfDraftPick);
+	public void addTradeRecord(SbfTeam toTeam, SbfTeam fromTeam, int leagueId, Integer pick){
+		SbfPickTrade trade = new SbfPickTrade();
+		trade.setLeagueId(leagueId);
+		trade.setPick(pick);
+		trade.setToTeamId(toTeam.getTeamId());
+		trade.setFromTeamId(fromTeam.getTeamId());
+		draftService.addSbfPickTrade(trade);
+	}
+
+	public void refreshCheatsheetToDefault(SbfRankSet c){
+		for(Player player : playerService.getAllPlayers()){
+			if(player.getProRank() < 500 && player.getProRank() != 0){
+				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank());
+				playerService.insertSbfRank(rank);
+			}
+
 		}
+	}
+
+	public void setCheatsheetAsDefaultForLeagueAndUser (SbfRankSet c, SbfLeague l, SbfUser u){
+		SbfUserTeam ut = leagueService.getSbfUserTeamForLeagueAndUser(UserSessionVars.getCurrentUser(), 
+				UserSessionVars.getCurrentLeague());
+		if (ut == null){
+			ut = new SbfUserTeam();
+			ut.setDefaultRankSetId(c.getRankSetId());
+			ut.setUserId(u.getUserId());
+			ut.setLeagueId(UserSessionVars.getCurrentLeague().getLeagueId());
+			leagueService.insertSbfUserTeam(ut);
+		}else{
+			ut.setDefaultRankSetId(c.getRankSetId());
+			leagueService.updateSbfUserTeam(ut);
+		}
+		UserSessionVars.resetRankSetToDefault();
 	}
 }

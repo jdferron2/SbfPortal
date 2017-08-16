@@ -1,5 +1,6 @@
 package org.SbfPortal.REST;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.GET;
@@ -10,26 +11,26 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.jdf.SbfPortal.backend.DAO.SbfDraftPickDAO;
-import com.jdf.SbfPortal.backend.DAO.SbfDraftPickDAOMysql;
+import com.jdf.SbfPortal.backend.DAO.SbfPickTradesDAO;
+import com.jdf.SbfPortal.backend.DAO.SbfPickTradesDAOMysql;
 import com.jdf.SbfPortal.backend.DAO.SbfDraftRecordDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfDraftRecordDAOMysql;
 import com.jdf.SbfPortal.backend.DAO.SbfTeamDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfTeamDAOMysql;
 import com.jdf.SbfPortal.backend.data.Player;
-import com.jdf.SbfPortal.backend.data.SbfDraftPick;
+import com.jdf.SbfPortal.backend.data.SbfPickTrade;
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
 
 @Path("/sbfdraftservice")
 
 public class SbfDraftService {
-	protected SbfDraftPickDAO sbfDraftPickDao;
+	protected SbfPickTradesDAO sbfDraftPickDao;
 	protected SbfDraftRecordDAO sbfDraftRecordDao;
 	protected SbfTeamDAO sbfTeamDao;
 
 	public SbfDraftService(){
-		sbfDraftPickDao = new SbfDraftPickDAOMysql();
+		sbfDraftPickDao = new SbfPickTradesDAOMysql();
 		sbfDraftRecordDao = new SbfDraftRecordDAOMysql();
 		sbfTeamDao = new SbfTeamDAOMysql();
 	}
@@ -77,7 +78,11 @@ public class SbfDraftService {
 	@Path("/sbfteams/{i}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<SbfTeam> getAllSbfTeams(@PathParam("i") Integer i) {
-		return sbfTeamDao.getAllTeams(i);
+		List<SbfTeam> teams = new ArrayList<SbfTeam>();
+		for (SbfTeam t : sbfTeamDao.getAllTeams()){
+			if (t.getLeagueId() == i) teams.add(t);
+		}
+		return teams;
 		//return (ArrayList<SbfDraftRecord>) sbfDraftRecordDao.getAllDraftRecords(1);
 	}
 }

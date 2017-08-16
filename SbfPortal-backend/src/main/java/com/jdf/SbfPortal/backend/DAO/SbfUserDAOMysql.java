@@ -1,7 +1,6 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,14 +13,14 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.jdf.SbfPortal.backend.data.SbfKeeper;
+import com.jdf.SbfPortal.backend.data.SbfTeam;
+import com.jdf.SbfPortal.backend.data.SbfUser;
 
-public class SbfKeeperDAOMysql implements SbfKeeperDAO {
-
+public class SbfUserDAOMysql implements SbfUserDAO{
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
-	public SbfKeeperDAOMysql(){
+	public SbfUserDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
@@ -32,26 +31,30 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 		}
 	}
 	
-	public synchronized List<SbfKeeper> getAllSbfKeepers(int leagueId) {
-		List<SbfKeeper> SbfKeepers = new ArrayList<SbfKeeper>();
+	@Override
+	public synchronized List<SbfUser> getAllSbfUsers() {
+
+		List<SbfUser> sbfUsers = new ArrayList<SbfUser>();
 		Statement stmt=null;
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
+
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "LEAGUE_ID, TEAM_ID, PLAYER_ID, ROUND "
-					+ "from SBF_KEEPERS where league_id = " + leagueId;
+					+ "USER_ID, USER_NAME, EMAIL, PASSWORD, ROLE "
+					+ "from SBF_USERS ";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
-				SbfKeeper keeper = new SbfKeeper(rs.getInt("LEAGUE_ID"),
-						rs.getInt("TEAM_ID"),
-						rs.getInt("PLAYER_ID"),
-						rs.getInt("ROUND")
+				SbfUser user = new SbfUser(rs.getInt("USER_ID"),
+						rs.getString("USER_NAME"),
+						rs.getString("PASSWORD"),
+						rs.getString("EMAIL"),
+						rs.getString("ROLE")
 						);
-				SbfKeepers.add(keeper);    				
+				sbfUsers.add(user);    				
 			}
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -67,27 +70,24 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 			}
 
 		}	
-
-
-		return SbfKeepers;
+		return sbfUsers;
 	}
 
-	public void insertSbfKeeper(SbfKeeper r) {
+	@Override
+	public void insertSbfUser(SbfUser u) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "insert into sbf_keepers "
-					+ "(TEAM_ID, LEAGUE_ID, PLAYER_ID, ROUND) "
-					+ "values (?,?,?,?)";
+			String sql = "insert into sbf_users "
+					+ "(user_name, password, email) "
+					+ "values (?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
-			prepStmt.setInt(1, r.getTeamId());
-			prepStmt.setInt(2, r.getLeagueId());
-			prepStmt.setInt(3, r.getPlayerId());
-			prepStmt.setInt(4, r.getRound());
-			
+			prepStmt.setString(1, u.getUserName());
+			prepStmt.setString(2, u.getPassword());	
+			prepStmt.setString(3, u.getEmail());	
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -98,31 +98,33 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 				try {
 					conn.close();
 				} catch (SQLException sqlEx) { } // ignore
+
 				conn = null;
 			}
+
 		}	
 		
 	}
 
-	public void updateSbfKeeper(SbfKeeper r) {
+	@Override
+	public void updateSbfUser(SbfUser u) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
-			
-			String sql = "update sbf_keepers "
+
+			String sql = "update sbf_users "
 					+ "set "
-					+ "TEAM_ID=?, "
-					+ "ROUND=? "
-					+ "where league_id = ? and player_id = ?";
+					+ "EMAIL=?, "
+					+ "PASSWORD=?, "
+					+ "ROLE=? "
+					+ "where USER_ID = ?";
 			prepStmt = conn.prepareStatement(sql);
-
-
-			prepStmt.setInt(1, r.getTeamId());
-			prepStmt.setInt(2, r.getRound());
-			prepStmt.setInt(3, r.getLeagueId());
-			prepStmt.setInt(4, r.getPlayerId());
-			prepStmt.executeUpdate();
+			prepStmt.setString(1, u.getEmail());
+			prepStmt.setString(2, u.getPassword());
+			prepStmt.setString(3, u.getRole());
+			prepStmt.setInt(4, u.getUserId());
+			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 			// handle the error
@@ -139,19 +141,17 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 		}	
 	}
 
-	public void deleteSbfKeeper(SbfKeeper r) {
+	@Override
+	public void deleteSbfUser(SbfUser u) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "delete from sbf_keepers where "
-					+ "LEAGUE_ID = ? and "
-					+ "PLAYER_ID = ? ";
+			String sql = "delete from sbf_users "
+					+ "where USER_ID = ? ";
 			prepStmt = conn.prepareStatement(sql);
-
-			prepStmt.setInt(1,r.getLeagueId());
-			prepStmt.setInt(2,r.getPlayerId());
+			prepStmt.setInt(1, u.getUserId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -168,5 +168,7 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 
 		}	
 		
-	}	
+		
+	}
+
 }

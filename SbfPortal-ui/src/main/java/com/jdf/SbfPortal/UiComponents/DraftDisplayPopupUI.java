@@ -1,6 +1,6 @@
 package com.jdf.SbfPortal.UiComponents;
 
-import com.jdf.SbfPortal.SessionAttributes;
+import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
@@ -49,14 +49,12 @@ public class DraftDisplayPopupUI extends UI {
 
 	@Override
 	protected void init(VaadinRequest request) {
-		leagueId = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_ID);
-		playerService = (PlayerService) UI.getCurrent().getSession().getAttribute(SessionAttributes.PLAYER_SERVICE);
-		draftService = (SbfDraftService) UI.getCurrent().getSession().getAttribute(SessionAttributes.DRAFT_SERVICE);
-		leagueService = (SbfLeagueService) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_SERVICE);
-		if(leagueMgr==null){
-			leagueMgr =
-					(LeagueInfoManager) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_MANAGER);
-		}
+		draftService = UserSessionVars.getDraftService();
+		leagueService = UserSessionVars.getLeagueService();
+		playerService = UserSessionVars.getPlayerService();
+		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
+		leagueMgr = UserSessionVars.getLeagueManager();
+
 		if (!viewBuilt){
 			buildLayout();
 			viewBuilt=true;
@@ -121,7 +119,7 @@ public class DraftDisplayPopupUI extends UI {
 	public synchronized void setSelectedPlayerLabel(){		
 		SbfDraftRecord latestPick = draftService.getSbfDraftRecordByPickNum(leagueMgr.getCurrentPick()-1, leagueId);
 		if (latestPick == null) return;
-		SbfTeam teamOnClock = leagueService.getSbfTeamBySbfId(latestPick.getSbfId(), leagueId);
+		SbfTeam teamOnClock = leagueService.getSbfTeamByTeamId(latestPick.getTeamId(), leagueId);
 		String teamName = teamOnClock.getOwnerName();
 		Player selectedPlayer = playerService.getPlayerById(latestPick.getPlayerId());		
 		selectedPlayerLabel.setValue("<div class=\"selectedPlayerInfo\">" + teamName + " selects<br />"
@@ -170,7 +168,7 @@ public class DraftDisplayPopupUI extends UI {
 		CHEERINGSOUND.setShowControls(false); CHEERINGSOUND.setSizeUndefined();
 		VerticalLayout soundLayout = new VerticalLayout();
 		soundLayout.addComponents(FIREWORKSSOUND,TADASOUND,CHEERINGSOUND);
-		
+
 		winnerContent = new VerticalLayout();
 		winnerContent.setSizeFull();
 		HorizontalLayout picLayout = new HorizontalLayout();

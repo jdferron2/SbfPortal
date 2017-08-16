@@ -1,4 +1,4 @@
-package com.jdf.SbfPortal.UiComponents;
+package com.jdf.SbfPortal.views;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,44 +12,37 @@ import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.annotations.Push;
-import com.vaadin.annotations.Theme;
-import com.vaadin.server.VaadinRequest;
+import com.vaadin.navigator.View;
+import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 
-@SuppressWarnings("serial")
-@Theme("sbftheme") 
 @Push
-public class DraftBoardPopupUI extends UI {
-	PlayerService playerService;
-	SbfDraftService draftService;
-	SbfLeagueService leagueService;
-	LeagueInfoManager leagueMgr;
-	Integer leagueId;
+public class DraftDayBoardView extends HorizontalLayout implements View {
 	boolean viewBuilt = false;
+	private SbfDraftService draftService;
+	private PlayerService playerService;
+	private SbfLeagueService leagueService;
+
+	private Integer leagueId;
+
 	int currentCol = 1;
 	int currentRow = 1;
 	GridLayout draftGrid;
 	HashMap<Integer, Label> draftLabelMap = new HashMap<Integer, Label>();
-
+	public final static String NAME = "Draft Board";
 	@Override
-	protected void init(VaadinRequest request) {
-		draftService = UserSessionVars.getDraftService();
-		leagueService = UserSessionVars.getLeagueService();
-		playerService = UserSessionVars.getPlayerService();
+	public void enter(ViewChangeEvent event) {
 		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
-		if (!viewBuilt){
-			buildLayout();
-			viewBuilt=true;
-		}
+		playerService = UserSessionVars.getPlayerService();
+		leagueService = UserSessionVars.getLeagueService();
+		draftService = UserSessionVars.getDraftService();
 
-	}
-
-	private void buildLayout(){
+		removeAllComponents();
 		VerticalLayout labelContainer;
 		draftGrid = new GridLayout(LeagueInfoManager.NUMBER_OF_TEAMS+1,LeagueInfoManager.NUMBER_OF_ROUNDS+1);
 		draftGrid.setSpacing(true);
@@ -103,53 +96,42 @@ public class DraftBoardPopupUI extends UI {
 		for(SbfDraftRecord r : draftService.getAllDraftRecords(leagueId)){
 			addDraftSelection(r);
 		}
-		setContent(draftGrid);
+		addComponent(draftGrid);
+
 	}
 
 	public synchronized void addDraftSelection(SbfDraftRecord r){
-		access(new Runnable() {
-			@Override
-			public void run() {      
-				Label l = draftLabelMap.get(r.getSlotDrafted());
-				Player p = playerService.getPlayerById(r.getPlayerId());
-				l.setValue(p.getDisplayName());
-				l.getParent().addStyleName(getPositionStyle(p.getPosition()));
-				//l.addStyleName(getPositionStyle(p.getPosition()));
-				l.setVisible(true);
-			}
-		});	
+		//getUI().access(new Runnable() {
+		//	@Override
+		//	public void run() {      
+		Label l = draftLabelMap.get(r.getSlotDrafted());
+		Player p = playerService.getPlayerById(r.getPlayerId());
+		l.setValue(p.getDisplayName());
+		l.getParent().addStyleName(getPositionStyle(p.getPosition()));
+		//l.addStyleName(getPositionStyle(p.getPosition()));
+		l.setVisible(true);
+		//	}
+		//});	
 	}
 
 	private String getPositionStyle(String pos){
 		String style = "";
 		switch (pos.toUpperCase()){
 		case 	"QB": style="bgQB";
-				break;
+		break;
 		case 	"RB": style="bgRB";
-				break;
+		break;
 		case 	"WR": style="bgWR";
-				break;
+		break;
 		case 	"TE": style="bgTE";
-				break;
+		break;
 		case 	"DEF": style="bgDEF";
-				break;
+		break;
 		case 	"K": style="bgK";
-				break;
+		break;
 		}
 		return style;
 	}
 
-	public void removeDraftSelection(SbfDraftRecord r) {
-		access(new Runnable() {
-			@Override
-			public void run() {      
-				Label l = draftLabelMap.get(r.getSlotDrafted());
-				Player p = playerService.getPlayerById(r.getPlayerId());
-				l.setValue(null);
-				l.getParent().removeStyleName(getPositionStyle(p.getPosition()));
-				l.setVisible(true);
-			}
-		});	
-	}
 
 }

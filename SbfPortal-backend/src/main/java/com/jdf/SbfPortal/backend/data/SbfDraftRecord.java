@@ -16,14 +16,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @XmlRootElement(name="draftRecords")
 public class SbfDraftRecord {
 	protected int leagueId;
-	protected int sbfId;
+	protected int teamId;
 	protected int playerId;
 	protected int slotDrafted;
 	protected Date timeDrafted;
 	
-	public SbfDraftRecord(int leagueId, int sbfId, int playerId, int slotDrafted, Timestamp timeDrafted){
+	public SbfDraftRecord(int leagueId, int teamId, int playerId, int slotDrafted, Timestamp timeDrafted){
 		this.leagueId = leagueId;
-		this.sbfId = sbfId;
+		this.teamId = teamId;
 		this.playerId = playerId;
 		this.slotDrafted = slotDrafted;
 		this.timeDrafted = timeDrafted;
@@ -40,12 +40,12 @@ public class SbfDraftRecord {
 		this.leagueId = leagueId;
 	}
 	
-	@XmlElement (name="sbfId")
-	public int getSbfId() {
-		return sbfId;
+	@XmlElement (name="teamId")
+	public int getTeamId() {
+		return teamId;
 	}
-	public void setSbfId(int sbfId) {
-		this.sbfId = sbfId;
+	public void setTeamId(int teamId) {
+		this.teamId = teamId;
 	}
 	
 	@XmlElement (name="playerId")

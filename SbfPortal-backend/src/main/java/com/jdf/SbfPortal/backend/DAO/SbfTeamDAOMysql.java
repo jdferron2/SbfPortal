@@ -30,7 +30,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 		}
 	}
 	
-	public synchronized List<SbfTeam> getAllTeams(Integer leagueId) {
+	public synchronized List<SbfTeam> getAllTeams() {
 
 		List<SbfTeam> sbfTeams = new ArrayList<SbfTeam>();
 		Statement stmt=null;
@@ -41,16 +41,17 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "SBF_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME "
-					+ "from SBF_TEAMS "
-					+ "where LEAGUE_ID = " + leagueId;
+					+ "TEAM_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME, LEAGUE_ID, USER_ID "
+					+ "from SBF_TEAMS ";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
-				SbfTeam team = new SbfTeam(leagueId, rs.getString("OWNER_NAME"),
+				SbfTeam team = new SbfTeam(rs.getInt("LEAGUE_ID"),
+						rs.getString("OWNER_NAME"),
 						rs.getInt("DRAFT_SLOT"),
-						rs.getInt("SBF_ID"),
-						rs.getString("TEAM_NAME")
+						rs.getInt("TEAM_ID"),
+						rs.getString("TEAM_NAME"),
+						rs.getInt("USER_ID")
 						);
 				sbfTeams.add(team);    				
 			}
@@ -79,14 +80,15 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_teams "
-					+ "(league_id, sbf_id, owner_name, draft_slot) "
-					+ "values (?,?,?,?)";
+					+ "(league_id, team_id, owner_name, draft_slot, user_id) "
+					+ "values (?,?,?,?, ?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, r.getLeagueId());
-			prepStmt.setInt(2, r.getSbfId());
+			prepStmt.setInt(2, r.getTeamId());
 			prepStmt.setString(3, r.getOwnerName());	
 			prepStmt.setString(4, r.getTeamName());	
+			prepStmt.setInt(5, r.getUserId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -116,14 +118,16 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 					+ "set "
 					+ "OWNER_NAME=?, "
 					+ "TEAM_NAME=?, "
-					+ "DRAFT_SLOT=? "
-					+ "where league_id = ? and sbf_id = ?";
+					+ "DRAFT_SLOT=?, "
+					+ "USER_ID=? "
+					+ "where league_id = ? and team_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setString(1, r.getOwnerName());
 			prepStmt.setString(2, r.getTeamName());
 			prepStmt.setInt(3, r.getDraftSlot());
-			prepStmt.setInt(4, r.getLeagueId());
-			prepStmt.setInt(5, r.getSbfId());
+			prepStmt.setInt(4, r.getUserId());
+			prepStmt.setInt(5, r.getLeagueId());
+			prepStmt.setInt(6, r.getTeamId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -149,9 +153,9 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			conn = ds.getConnection();
 
 			String sql = "delete from sbf_teams "
-					+ "where sbf_id = ? ";
+					+ "where team_id = ? ";
 			prepStmt = conn.prepareStatement(sql);
-			prepStmt.setInt(1, r.getSbfId());
+			prepStmt.setInt(1, r.getTeamId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());

@@ -13,14 +13,13 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.jdf.SbfPortal.backend.data.SbfDraftPick;
+import com.jdf.SbfPortal.backend.data.SbfUserTeam;
 
-public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
-
+public class SbfUserTeamsDAOMysql implements SbfUserTeamsDAO{
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
-	public SbfDraftPickDAOMysql(){
+	public SbfUserTeamsDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
@@ -30,8 +29,11 @@ public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
 			e.printStackTrace();
 		}
 	}
-	public synchronized List<SbfDraftPick> getAllSbfDraftPicks(Integer leagueId) {
-		List<SbfDraftPick> sbfDraftPicks = new ArrayList<SbfDraftPick>();
+
+	@Override
+	public synchronized List<SbfUserTeam> getAllSBfUserTeams() {
+
+		List<SbfUserTeam> sbfUserTeams = new ArrayList<SbfUserTeam>();
 		Statement stmt=null;
 		ResultSet rs=null;
 		Connection conn = null;
@@ -40,17 +42,18 @@ public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "LEAGUE_ID, SBF_ID, PICK_NUM "
-					+ "from SBF_DRAFT_PICKS "
-					+ "where LEAGUE_ID = " + leagueId;
+					+ "USER_ID, LEAGUE_ID, TEAM_ID, DEFAULT_RANK_SET_ID "
+					+ "from SBF_USER_TEAMS ";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
-				SbfDraftPick pick = new SbfDraftPick(rs.getInt("LEAGUE_ID"),
-						rs.getInt("SBF_ID"),
-						rs.getInt("PICK_NUM")
+				SbfUserTeam team = new SbfUserTeam(rs.getInt("LEAGUE_ID"),
+						rs.getInt("TEAM_ID"),
+						rs.getInt("USER_ID"),
+						rs.getInt("DEFAULT_RANK_SET_ID")
+						
 						);
-				sbfDraftPicks.add(pick);    				
+				sbfUserTeams.add(team);    				
 			}
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -66,23 +69,24 @@ public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
 			}
 
 		}	
-		return sbfDraftPicks;
+		return sbfUserTeams;
 	}
 
-	public synchronized void insertSbfDraftPick(SbfDraftPick p) {
+	@Override
+	public void insertSbfUserTeam(SbfUserTeam t) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "insert into sbf_draft_picks "
-					+ "(SBF_ID, LEAGUE_ID, PICK_NUM) "
+			String sql = "insert into sbf_user_teams "
+					+ "(USER_ID, TEAM_ID, LEAGUE_ID) "
 					+ "values (?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
-			prepStmt.setInt(1, p.getSbfId());
-			prepStmt.setInt(2, p.getLeagueId());
-			prepStmt.setInt(3, p.getPick());
+			prepStmt.setInt(1, t.getUserId());
+			prepStmt.setInt(2, t.getTeamId());
+			prepStmt.setInt(3, t.getLeagueId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -93,55 +97,61 @@ public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
 				try {
 					conn.close();
 				} catch (SQLException sqlEx) { } // ignore
+
 				conn = null;
 			}
+
 		}	
+
 	}
 
-	public synchronized void updateSbfDraftPick(SbfDraftPick p) {
+	@Override
+	public void updateSbfUserTeam(SbfUserTeam t) {
+				PreparedStatement prepStmt=null;
+				Connection conn = null;
+				try {
+					conn = ds.getConnection();
+		
+					String sql = "update sbf_user_teams "
+							+ "set "
+							+ "TEAM_ID=?, "
+							+ "DEFAULT_RANK_SET_ID=? "
+							+ "where USER_ID = ? and league_id = ?";
+					prepStmt = conn.prepareStatement(sql);
+					prepStmt.setInt(1, t.getTeamId());
+					prepStmt.setInt(2, t.getDefaultRankSetId());
+					prepStmt.setInt(3, t.getUserId());
+					prepStmt.setInt(4, t.getLeagueId());
+					prepStmt.execute();
+				} catch (Exception ex) {
+					System.out.println(ex.getMessage());
+					// handle the error
+				}
+				finally {
+					if (conn != null) {
+						try {
+							conn.close();
+						} catch (SQLException sqlEx) { } // ignore
+		
+						conn = null;
+					}
+		
+				}	
+	}
+
+	@Override
+	public void deleteSbfUserTeam(SbfUserTeam t) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "update sbf_draft_picks set "
-					+ "SBF_ID "
-					+ "=?";
+			String sql = "delete from sbf_user_teams "
+					+ "where USER_ID = ? and team_id = ? and league_id = ? ";
 			prepStmt = conn.prepareStatement(sql);
-
-			prepStmt.setInt(1, p.getSbfId());
-			prepStmt.execute();
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
-		}
-		finally {
-			if (conn != null) {
-				try {
-					conn.close();
-				} catch (SQLException sqlEx) { } // ignore
-
-				conn = null;
-			}
-
-		}	
-	}
-
-	public void deleteSbfDraftPick(SbfDraftPick a) {
-		PreparedStatement prepStmt=null;
-		Connection conn = null;
-		try {
-			conn = ds.getConnection();
-
-			String sql = "delete from sbf_draft_picks where "
-					+ "SBF_ID = ? and "
-					+ "PICK_NUM = ? and "
-					+ "LEAGUE_ID = ?";
-			prepStmt = conn.prepareStatement(sql);
-
-			prepStmt.setInt(1,a.getSbfId());
-			prepStmt.setInt(2,a.getPick());
-			prepStmt.setInt(3,a.getLeagueId());
+			prepStmt.setInt(1, t.getUserId());
+			prepStmt.setInt(2, t.getTeamId());
+			prepStmt.setInt(3, t.getLeagueId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -158,5 +168,7 @@ public class SbfDraftPickDAOMysql implements SbfDraftPickDAO {
 
 		}	
 
+
 	}
+
 }

@@ -1,7 +1,6 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,14 +13,13 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.jdf.SbfPortal.backend.data.SbfKeeper;
+import com.jdf.SbfPortal.backend.data.SbfRankSet;
 
-public class SbfKeeperDAOMysql implements SbfKeeperDAO {
-
+public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
-	public SbfKeeperDAOMysql(){
+	public SbfRankSetDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
@@ -31,27 +29,30 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 			e.printStackTrace();
 		}
 	}
-	
-	public synchronized List<SbfKeeper> getAllSbfKeepers(int leagueId) {
-		List<SbfKeeper> SbfKeepers = new ArrayList<SbfKeeper>();
+
+	@Override
+	public synchronized List<SbfRankSet> getAllSbfRankSets(Integer userId) {
+
+		List<SbfRankSet> SbfRankSets = new ArrayList<SbfRankSet>();
 		Statement stmt=null;
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
+
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "LEAGUE_ID, TEAM_ID, PLAYER_ID, ROUND "
-					+ "from SBF_KEEPERS where league_id = " + leagueId;
+					+ "USER_ID, RANK_SET_ID, RANK_SET_NAME, DATE_CREATED "
+					+ "from SBF_RANK_SETS where USER_ID = " + userId;
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
-				SbfKeeper keeper = new SbfKeeper(rs.getInt("LEAGUE_ID"),
-						rs.getInt("TEAM_ID"),
-						rs.getInt("PLAYER_ID"),
-						rs.getInt("ROUND")
+				SbfRankSet rankSet = new SbfRankSet(rs.getInt("USER_ID"),
+						rs.getInt("RANK_SET_ID"),
+						rs.getString("RANK_SET_NAME"),
+						rs.getDate("DATE_CREATED")
 						);
-				SbfKeepers.add(keeper);    				
+				SbfRankSets.add(rankSet);    				
 			}
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -67,62 +68,59 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 			}
 
 		}	
-
-
-		return SbfKeepers;
+		return SbfRankSets;
 	}
 
-	public void insertSbfKeeper(SbfKeeper r) {
+	@Override
+	public void insertSbfRankSet(SbfRankSet s) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "insert into sbf_keepers "
-					+ "(TEAM_ID, LEAGUE_ID, PLAYER_ID, ROUND) "
-					+ "values (?,?,?,?)";
-			prepStmt = conn.prepareStatement(sql);
+			String sql = "insert into sbf_rank_sets "
+					+ "(USER_ID, RANK_SET_NAME) "
+					+ "values (?,?)";
+			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
-			prepStmt.setInt(1, r.getTeamId());
-			prepStmt.setInt(2, r.getLeagueId());
-			prepStmt.setInt(3, r.getPlayerId());
-			prepStmt.setInt(4, r.getRound());
-			
-			prepStmt.execute();
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
-		}
-		finally {
-			if (conn != null) {
-				try {
-					conn.close();
-				} catch (SQLException sqlEx) { } // ignore
-				conn = null;
-			}
-		}	
-		
-	}
-
-	public void updateSbfKeeper(SbfKeeper r) {
-		PreparedStatement prepStmt=null;
-		Connection conn = null;
-		try {
-			conn = ds.getConnection();
-			
-			String sql = "update sbf_keepers "
-					+ "set "
-					+ "TEAM_ID=?, "
-					+ "ROUND=? "
-					+ "where league_id = ? and player_id = ?";
-			prepStmt = conn.prepareStatement(sql);
-
-
-			prepStmt.setInt(1, r.getTeamId());
-			prepStmt.setInt(2, r.getRound());
-			prepStmt.setInt(3, r.getLeagueId());
-			prepStmt.setInt(4, r.getPlayerId());
+			prepStmt.setInt(1, s.getUserId());
+			prepStmt.setString(2, s.getRankSetName());
 			prepStmt.executeUpdate();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			s.setRankSetId(rs.getInt(1));
+		} catch (Exception ex) {
+			System.out.println(ex.getMessage());
+			// handle the error
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
+
+	}
+
+	@Override
+	public void updateSbfRankSet(SbfRankSet s) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+
+			String sql = "update sbf_rank_sets "
+					+ "set "
+					+ "RANK_SET_NAME=? "
+					+ "where RANK_SET_ID = ?";
+			prepStmt = conn.prepareStatement(sql);
+			prepStmt.setString(1, s.getRankSetName());
+			prepStmt.setInt(2, s.getRankSetId());
+			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 			// handle the error
@@ -139,19 +137,17 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 		}	
 	}
 
-	public void deleteSbfKeeper(SbfKeeper r) {
+	@Override
+	public void deleteSbfRankSet(SbfRankSet s) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 
-			String sql = "delete from sbf_keepers where "
-					+ "LEAGUE_ID = ? and "
-					+ "PLAYER_ID = ? ";
+			String sql = "delete from sbf_rank_sets "
+					+ "where rank_set_id = ? ";
 			prepStmt = conn.prepareStatement(sql);
-
-			prepStmt.setInt(1,r.getLeagueId());
-			prepStmt.setInt(2,r.getPlayerId());
+			prepStmt.setInt(1, s.getRankSetId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
@@ -167,6 +163,8 @@ public class SbfKeeperDAOMysql implements SbfKeeperDAO {
 			}
 
 		}	
-		
-	}	
+
+
+	}
+
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.jdf.SbfPortal.SessionAttributes;
 import com.jdf.SbfPortal.UiComponents.ConfirmButton;
+import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
@@ -40,42 +41,24 @@ public class AdminView extends VerticalLayout implements View  {
 	private GridLayout tradeLayout = new GridLayout(3,3);
 	private boolean viewBuilt = false;
 	private Integer leagueId;
-	private Integer sbfId;
-	private SbfDraftService draftService;
+	private Integer rankSetId;
+	private Integer userId;
 	private PlayerService playerService;
 	private SbfLeagueService leagueService;
 	private LeagueInfoManager leagueMgr;
 	private boolean icingEnabled;
 
 	public AdminView(){
-		
+
 	}
 	@Override
 	public void enter(ViewChangeEvent event) {
-		if(playerService==null){
-			playerService = 
-					(PlayerService) UI.getCurrent().getSession().getAttribute(SessionAttributes.PLAYER_SERVICE);
-		}
-		if(draftService==null){
-			draftService = 
-					(SbfDraftService) UI.getCurrent().getSession().getAttribute(SessionAttributes.DRAFT_SERVICE);
-		}
-		if(leagueService==null){
-			leagueService = 
-					(SbfLeagueService) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_SERVICE);
-		}
-		if(leagueMgr==null){
-			leagueMgr =
-					(LeagueInfoManager) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_MANAGER);
-		}
-		if(leagueId == null){
-			leagueId = 
-					(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.LEAGUE_ID);
-		}
-		if(sbfId == null){
-			sbfId = 
-					(Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SBF_ID);
-		}
+		userId = UserSessionVars.getCurrentUser().getUserId();
+		rankSetId = UserSessionVars.getRankSet().getRankSetId();
+		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
+		leagueMgr = UserSessionVars.getLeagueManager();
+		playerService = UserSessionVars.getPlayerService();
+		leagueService = UserSessionVars.getLeagueService();
 		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED) == null){
 			UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, true);
 			icingEnabled = true;
@@ -89,17 +72,17 @@ public class AdminView extends VerticalLayout implements View  {
 	}
 
 	private void buildView(){
-		team1PickSelector = createTradeBox(sbfId);
-		team2PickSelector = createTradeBox(sbfId);
+		team1PickSelector = createTradeBox(userId);
+		team2PickSelector = createTradeBox(userId);
 		team1Selector =  this.createTeamSelectorCB("Team 1", team1PickSelector);
 		team2Selector =  this.createTeamSelectorCB("Team 2", team2PickSelector);
 		CheckBox enableIcing = new CheckBox("Icing Enabled");
 		enableIcing.setValue(icingEnabled);
 
 		enableIcing.addValueChangeListener(event ->
-			UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, enableIcing.getValue())
-			);
-		
+		UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, enableIcing.getValue())
+				);
+
 		setSpacing(true);
 		setMargin(true);
 		Button resetPlayerList = new Button("Reset Players Table");
@@ -113,7 +96,7 @@ public class AdminView extends VerticalLayout implements View  {
 				Players players = RestAPIUtils.getInstance().invokeQueryPlayers();
 				for(Player player : players.getPlayers()){
 					//if (player.getActive() == 1){
-						playerService.insertPlayer(player);
+					playerService.insertPlayer(player);
 					//}			
 				}
 
@@ -126,25 +109,25 @@ public class AdminView extends VerticalLayout implements View  {
 						playerService.updatePlayer(player);
 					}
 				}
-				
+
 				for (Player p : playerService.getAllPlayers()){
 					if (p.getProRank() == 0){
 						p.setProRank(9999);
 						playerService.updatePlayer(p);
 					}
 				}
-//				ArrayList<SbfRank> ranksToDelete = new ArrayList<SbfRank>();
-//				for (SbfRank r : playerService.getAllSbfRanks(sbfId)){
-//					if (playerService.getPlayerById(r.getPlayerId()) == null){
-//						//System.out.println("DELETE RANK FOR " + r.getPlayerId());
-//						ranksToDelete.add(r);
-//					}
-//				}
-//				
-//				for (SbfRank r : ranksToDelete){
-//					playerService.deleteSbfRank(r);
-//				}
-				
+				//				ArrayList<SbfRank> ranksToDelete = new ArrayList<SbfRank>();
+				//				for (SbfRank r : playerService.getAllSbfRanks(sbfId)){
+				//					if (playerService.getPlayerById(r.getPlayerId()) == null){
+				//						//System.out.println("DELETE RANK FOR " + r.getPlayerId());
+				//						ranksToDelete.add(r);
+				//					}
+				//				}
+				//				
+				//				for (SbfRank r : ranksToDelete){
+				//					playerService.deleteSbfRank(r);
+				//				}
+
 
 				Notification.show("Player list update successfully!");;		
 			}
@@ -157,15 +140,37 @@ public class AdminView extends VerticalLayout implements View  {
 			private static final long serialVersionUID = 1L;
 			public void buttonClick(ClickEvent event) {
 				//delete current ranks
-				playerService.deleteAllSbfRanks(sbfId);
+				playerService.deleteAllSbfRanks(rankSetId);
 
 				//add default ranks based on pro ranks
 				for(Player player : playerService.getAllPlayers()){
 					if(player.getProRank() < 500 && player.getProRank() != 0){
-						SbfRank rank = new SbfRank(sbfId, player.getPlayerId(), player.getProRank());
+						SbfRank rank = new SbfRank(rankSetId, player.getPlayerId(), player.getProRank());
 						playerService.insertSbfRank(rank);
 					}
-					
+
+				}
+
+				Notification.show("Ranks updated successfully!");
+			}
+
+		});
+		
+		ConfirmButton resetDefaultRanks = new ConfirmButton("Reset Default Ranks");
+		resetDefaultRanks.setConfirmationText("This will reset default ranks to the current pro ranks.");
+		resetDefaultRanks.addClickListener(new ClickListener() {
+			private static final long serialVersionUID = 1L;
+			public void buttonClick(ClickEvent event) {
+				//delete current ranks
+				playerService.deleteAllSbfRanks(0);
+
+				//add default ranks based on pro ranks
+				for(Player player : playerService.getAllPlayers()){
+					if(player.getProRank() < 500 && player.getProRank() != 0){
+						SbfRank rank = new SbfRank(0, player.getPlayerId(), player.getProRank());
+						playerService.insertSbfRank(rank);
+					}
+
 				}
 
 				Notification.show("Ranks updated successfully!");
@@ -176,11 +181,11 @@ public class AdminView extends VerticalLayout implements View  {
 		processTrade.addClickListener(new ClickListener() {
 			private static final long serialVersionUID = 1L;
 			public void buttonClick(ClickEvent event) {
-				if(team2PickSelector.getValue()!= null){
-					leagueMgr.addPickToTeam(team1Selector.getValue(), leagueId, team2PickSelector.getValue());
+				if(team2PickSelector.getValue()!= null ){
+					leagueMgr.addTradeRecord(team1Selector.getValue(), team2Selector.getValue(), leagueId, team2PickSelector.getValue());
 				}
-				if(team1PickSelector.getValue()!=null){
-					leagueMgr.addPickToTeam(team2Selector.getValue(), leagueId, team1PickSelector.getValue());
+				if(team1PickSelector.getValue()!= null ){
+					leagueMgr.addTradeRecord(team2Selector.getValue(), team1Selector.getValue(), leagueId, team1PickSelector.getValue());
 				}
 				team1PickSelector.clear();
 				team2PickSelector.clear();
@@ -199,7 +204,7 @@ public class AdminView extends VerticalLayout implements View  {
 		tradeLayout.addComponent(team1PickSelector,0,1);
 		tradeLayout.addComponent(team2PickSelector,1,1);
 		HorizontalLayout buttonLayout = new HorizontalLayout();
-		buttonLayout.addComponents(resetPlayerList, resetMyRanks);
+		buttonLayout.addComponents(resetPlayerList, resetMyRanks,resetDefaultRanks);
 		addComponents(enableIcing, buttonLayout, new Label("PROCESS TRADE"), tradeLayout);
 	}
 
@@ -218,12 +223,12 @@ public class AdminView extends VerticalLayout implements View  {
 
 	public ComboBox<SbfTeam> createTeamSelectorCB(String name, ComboBox<Integer> connectedBox){
 		ComboBox<SbfTeam> teamCB = new ComboBox<SbfTeam>(name);
-		teamCB.setItems(leagueService.getAllSbfTeams(leagueId));
+		teamCB.setItems(leagueService.getAllSbfTeamsForLeague(leagueId));
 		teamCB.setItemCaptionGenerator(SbfTeam::getOwnerName);
 		teamCB.addValueChangeListener(event-> {
 			if(event.getValue()!= null){
 				connectedBox.clear();
-				connectedBox.setItems(leagueMgr.getPicksForTeam(event.getValue().getSbfId()));
+				connectedBox.setItems(leagueMgr.getPicksForTeam(event.getValue().getTeamId()));
 				connectedBox.setVisible(true);
 				setSubmitVisible();
 			}else{

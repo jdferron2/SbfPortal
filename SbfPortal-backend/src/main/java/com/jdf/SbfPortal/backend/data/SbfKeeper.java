@@ -2,13 +2,13 @@ package com.jdf.SbfPortal.backend.data;
 
 public class SbfKeeper {
 	private Integer leagueId;
-	private Integer sbfId;
+	private Integer teamId;
 	private Integer playerId;
 	private Integer round;
 	
-	public SbfKeeper(int leagueId, int sbfId, int playerId, int round) {
+	public SbfKeeper(int leagueId, int teamId, int playerId, int round) {
 		this.leagueId = leagueId;
-		this.sbfId = sbfId;
+		this.teamId = teamId;
 		this.playerId = playerId;
 		this.round = round;
 	}
@@ -18,11 +18,11 @@ public class SbfKeeper {
 	public void setLeagueId(Integer leagueId) {
 		this.leagueId = leagueId;
 	}
-	public Integer getSbfId() {
-		return sbfId;
+	public Integer getTeamId() {
+		return teamId;
 	}
-	public void setSbfId(Integer sbfId) {
-		this.sbfId = sbfId;
+	public void setTeamId(Integer teamId) {
+		this.teamId = teamId;
 	}
 	public Integer getPlayerId() {
 		return playerId;

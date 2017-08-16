@@ -1,39 +1,45 @@
 package com.jdf.SbfPortal.backend;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.jdf.SbfPortal.backend.DAO.SbfDraftPickDAO;
+import com.jdf.SbfPortal.backend.DAO.SbfPickTradesDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfDraftRecordDAO;
-import com.jdf.SbfPortal.backend.data.SbfDraftPick;
+import com.jdf.SbfPortal.backend.data.SbfPickTrade;
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
 
 public class SbfDraftService {
-	protected List<SbfDraftPick> sbfDraftPicks; 
+	protected List<SbfPickTrade> sbfDraftPicks; 
 	protected List<SbfDraftRecord> draftRecords; 
-	protected SbfDraftPickDAO sbfDraftPickDao;
+	protected SbfPickTradesDAO sbfDraftPickDao;
 	protected SbfDraftRecordDAO sbfDraftRecordDao;
 
-	protected SbfDraftService(SbfDraftPickDAO sbfDraftPickDao, SbfDraftRecordDAO sbfDraftRecordDao){
+	protected SbfDraftService(SbfPickTradesDAO sbfDraftPickDao, SbfDraftRecordDAO sbfDraftRecordDao){
 		this.sbfDraftPickDao = sbfDraftPickDao;
 		this.sbfDraftRecordDao = sbfDraftRecordDao;
 	}
 	
-	public synchronized void addSbfDraftPick(SbfDraftPick pick){
-		sbfDraftPickDao.insertSbfDraftPick(pick);
+	public synchronized void addSbfPickTrade(SbfPickTrade pick){
+		sbfDraftPickDao.insertSbfPickTrade(pick);
 		sbfDraftPicks.add(pick);
 	}
 	
-	public synchronized void updateSbfDraftPick(SbfDraftPick pick){
-		sbfDraftPickDao.updateSbfDraftPick(pick);
+	public synchronized void updateSbfPickTrade(SbfPickTrade pick){
+		sbfDraftPickDao.updateSbfPickTrade(pick);
 	}
 
-	public synchronized void deleteSbfDraftPick(SbfDraftPick pick){
-		sbfDraftPickDao.deleteSbfDraftPick(pick);
+	public synchronized void deleteSbfPickTrade(SbfPickTrade pick){
+		sbfDraftPickDao.deleteSbfPickTrade(pick);
 		sbfDraftPicks.remove(pick);
 	}
 	
 	public synchronized void addSbfDraftRecord(SbfDraftRecord rec){
 		sbfDraftRecordDao.insertDraftRecord(rec);
+		this.getAllDraftRecords(rec.getLeagueId()).add(rec);
+	}
+	
+	public synchronized void addSbfDraftRecordtoSession(SbfDraftRecord rec){
+		//sbfDraftRecordDao.insertDraftRecord(rec);
 		this.getAllDraftRecords(rec.getLeagueId()).add(rec);
 	}
 	
@@ -46,9 +52,9 @@ public class SbfDraftService {
 		sbfDraftRecordDao.updateDraftRecord(rec);
 	}
 	
-	public synchronized List<SbfDraftPick> getAllSbfDraftPicks(Integer leagueId) {
+	public synchronized List<SbfPickTrade> getAllSbfPickTrades(Integer leagueId) {
 		if (sbfDraftPicks == null) {
-			sbfDraftPicks = sbfDraftPickDao.getAllSbfDraftPicks(leagueId);
+			sbfDraftPicks = sbfDraftPickDao.getAllSbfPickTrades(leagueId);
 		}
 		return sbfDraftPicks;
 	}
@@ -61,14 +67,21 @@ public class SbfDraftService {
 	}
 
 	public synchronized Integer getPickOwnerId(int pick, int leagueId) {
-		SbfDraftPick test= getAllSbfDraftPicks(leagueId).stream().filter(
+		//teamList.sort((t1,t2)->Integer.compare(t1.getDraftSlot(), t2.getDraftSlot()));
+		List<SbfPickTrade> trades = getAllSbfPickTrades(leagueId);
+		List<SbfPickTrade> tradesSorted = new ArrayList<SbfPickTrade>();
+		for(SbfPickTrade t : trades){
+			tradesSorted.add(t);
+		}
+		tradesSorted.sort((p1,p2)->p2.getProcessedTs().compareTo(p1.getProcessedTs()));
+		SbfPickTrade test= tradesSorted.stream().filter(
 				p->p.getPick()==pick).findFirst().orElse(null);
 		if(test==null) return null;
-		return test.getSbfId();
+		return test.getToTeamId();
 	}	
 
-	public synchronized SbfDraftPick getPickBySbfIdPick(int pick, int leagueId) {
-		SbfDraftPick test= getAllSbfDraftPicks(leagueId).stream().filter(
+	public synchronized SbfPickTrade getPickBySbfIdPick(int pick, int leagueId) {
+		SbfPickTrade test= getAllSbfPickTrades(leagueId).stream().filter(
 				p->p.getPick() == pick).findFirst().orElse(null);
 		if(test==null) return null;
 		return test;
