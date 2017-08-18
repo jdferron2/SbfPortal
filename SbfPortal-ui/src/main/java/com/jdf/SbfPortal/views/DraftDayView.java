@@ -17,10 +17,12 @@ import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
 import com.jdf.SbfPortal.backend.utility.BroadcastCommands;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
+import com.vaadin.annotations.Push;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.BrowserWindowOpener;
+import com.vaadin.server.Page;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Audio;
@@ -32,6 +34,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.MenuBar.Command;
 import com.vaadin.ui.MenuBar.MenuItem;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -40,6 +43,7 @@ import com.vaadin.ui.components.grid.HeaderRow;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 
+@Push
 @SuppressWarnings("serial")
 public class DraftDayView extends HorizontalLayout implements View {
 	public final static String NAME = "Draft Day";
@@ -354,7 +358,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 						((DraftBoardPopupUI) t).addDraftSelection(r);
 					}
 				}
-				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, r);
+				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, new Object[] {r, isAWinner});
 				setOnTheClockCaption();
 			});
 			return draftButtonRenderer;
@@ -377,7 +381,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 						((DraftBoardPopupUI) t).removeDraftSelection(r);
 					}
 				}
-				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, r);
+				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.UNDO_DRAFT_PICK, new Object[] {r});
 
 				setOnTheClockCaption();
 			});
@@ -422,5 +426,18 @@ public class DraftDayView extends HorizontalLayout implements View {
 			layout.addComponent(resumeButton);
 			layout.setComponentAlignment(resumeButton, Alignment.MIDDLE_RIGHT);
 
+		}
+
+		public void refreshPage() {
+			UI.getCurrent().access(new Runnable() {
+				@Override
+				public void run() {      
+					playersDataProvider.refreshAll();
+					draftedPlayersDataProvider.refreshAll();
+//					Notification notify = new Notification("Something changed.");
+//					notify.setDelayMsec(2000);
+//					notify.show(Page.getCurrent());
+				}
+			});			
 		}
 }

@@ -39,8 +39,11 @@ public class SbfDraftService {
 	}
 	
 	public synchronized void addSbfDraftRecordtoSession(SbfDraftRecord rec){
-		//sbfDraftRecordDao.insertDraftRecord(rec);
 		this.getAllDraftRecords(rec.getLeagueId()).add(rec);
+	}
+	
+	public void removeSbfDraftRecordFromSession(SbfDraftRecord r) {
+		this.getAllDraftRecords(r.getLeagueId()).remove(r);
 	}
 	
 	public synchronized void deleteSbfDraftRecord(SbfDraftRecord rec){
@@ -96,4 +99,6 @@ public class SbfDraftService {
 		return getAllDraftRecords(leagueId).stream().
 				filter(r->r.getSlotDrafted()==pick).findFirst().orElse(null);
 	}
+
+
 }

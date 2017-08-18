@@ -2,6 +2,9 @@ package com.jdf.SbfPortal;
 
 import javax.annotation.Resource;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
+
 import com.jdf.SbfPortal.authentication.AccessControl;
 import com.jdf.SbfPortal.authentication.BasicAccessControl;
 import com.jdf.SbfPortal.authentication.LoginScreen;
@@ -9,6 +12,7 @@ import com.jdf.SbfPortal.authentication.LoginScreen.LoginListener;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.MessageHandler;
+import com.jdf.SbfPortal.utility.UncaughtExceptionHandler;
 import com.jdf.SbfPortal.views.CheatSheetView;
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
@@ -32,7 +36,7 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 	private Navigator 			navigator;	
 	boolean initialized = false;
 	private MessageHandler handler;
-	public View currentView;
+	private static Logger logger;
 
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
@@ -49,6 +53,8 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 
 	@Override
 	protected void init(VaadinRequest request) {
+		configureLog4j();
+		UI.getCurrent().setErrorHandler(new UncaughtExceptionHandler());
 		Broadcaster.register(this);
 		UserSessionVars.setAccessControl(accessControl);
 		handler = new MessageHandler(this.getSession());
@@ -80,11 +86,11 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 
 
 	@Override
-	public void receiveBroadcast(VaadinSession ses, String command, Object obj) {
+	public void receiveBroadcast(VaadinSession ses, String command, Object[] args) {
 		access(new Runnable() {
 			@Override
 			public void run() {
-				handler.processMessage(ses, command, obj);
+				handler.processMessage(ses, command, args);
 			}
 		});
 	}
@@ -103,6 +109,15 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 		}else{
 			getNavigator().navigateTo(getNavigator().getState());
 		}
+	}
+	
+	private void configureLog4j(){
+		String url = "";
+		url = VaadinServlet.getCurrent().getServletContext().getRealPath("/WEB-INF") + "/sbfportal-log4j.xml";
+
+		DOMConfigurator.configure(url);
+		logger = Logger.getLogger(SbfUI.class);
+		logger.info("Configured Log4J for the application:");
 	}
 
 }

@@ -13,20 +13,22 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.data.SbfRankSet;
 
 public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
+	private static Logger logger = Logger.getLogger(SbfRankSetDAOMysql.class);
 	public SbfRankSetDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
 			ds = (DataSource) envContext.lookup("jdbc/MyDB");
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Stack Trace: " + e);
 		}
 	}
 
@@ -55,8 +57,7 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 				SbfRankSets.add(rankSet);    				
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -90,8 +91,7 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 			rs.next();
 			s.setRankSetId(rs.getInt(1));
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -122,8 +122,7 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 			prepStmt.setInt(2, s.getRankSetId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -150,8 +149,7 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 			prepStmt.setInt(1, s.getRankSetId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {

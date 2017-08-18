@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.DAO.PlayerDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfRankDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfRankSetsDAO;
@@ -21,7 +23,7 @@ public class PlayerService {
 	private HashMap<Integer, List<SbfRank>> sbfRanksLookup = new HashMap<Integer, List<SbfRank>>();
 	private PlayerDAO playerDao;
 	private SbfRankDAO sbfRankDao;
-	
+	private static Logger logger = Logger.getLogger(PlayerService.class);
 	private SbfRankSetsDAO sbfRankSetsDao;
 
 	PlayerService(PlayerDAO pDao, SbfRankDAO sDao, SbfRankSetsDAO rsDao){

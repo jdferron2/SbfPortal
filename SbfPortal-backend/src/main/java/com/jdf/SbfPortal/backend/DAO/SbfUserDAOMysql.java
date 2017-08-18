@@ -13,24 +13,25 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.jdf.SbfPortal.backend.data.SbfTeam;
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.data.SbfUser;
 
 public class SbfUserDAOMysql implements SbfUserDAO{
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
+	private static Logger logger = Logger.getLogger(SbfUserDAOMysql.class);
 	public SbfUserDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
 			ds = (DataSource) envContext.lookup("jdbc/MyDB");
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Stack Trace: ", e);
 		}
 	}
-	
+
 	@Override
 	public synchronized List<SbfUser> getAllSbfUsers() {
 
@@ -57,8 +58,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 				sbfUsers.add(user);    				
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ", ex);
 		}
 		finally {
 			if (conn != null) {
@@ -90,8 +90,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			prepStmt.setString(3, u.getEmail());	
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ", ex);
 		}
 		finally {
 			if (conn != null) {
@@ -103,7 +102,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			}
 
 		}	
-		
+
 	}
 
 	@Override
@@ -126,8 +125,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			prepStmt.setInt(4, u.getUserId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ", ex);
 		}
 		finally {
 			if (conn != null) {
@@ -154,8 +152,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			prepStmt.setInt(1, u.getUserId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ", ex);
 		}
 		finally {
 			if (conn != null) {
@@ -167,8 +164,8 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			}
 
 		}	
-		
-		
+
+
 	}
 
 }

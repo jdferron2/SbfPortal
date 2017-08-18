@@ -7,6 +7,7 @@ import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.data.SbfRankSet;
 import com.jdf.SbfPortal.backend.data.SbfUser;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
+import com.vaadin.navigator.View;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
 import com.vaadin.ui.UI;
@@ -20,6 +21,7 @@ public class UserSessionVars {
 	public static final String LEAGUE_MGR = "LEAGUEMGR";
 	public static final String RANK_SET = "RANKSET";
 	private static final String ACCESS_CONTROL = "ACCESSCONTROL";
+	private static final String CURRENT_VIEW = "CURRENTVIEW";
 
 	public static SbfUser getCurrentUser() {
 		SbfUser currentUser = (SbfUser) UI.getCurrent().getSession()
@@ -34,6 +36,22 @@ public class UserSessionVars {
 		} else {
 			UI.getCurrent().getSession().setAttribute(
 					CURRENT_USER, currentUser);
+		}
+	}
+	
+	public static View getCurrentView() {
+		View v = (View) UI.getCurrent().getSession()
+				.getAttribute(CURRENT_VIEW);
+		return v;
+	}
+
+	public static void setCurrentView(View v) {
+		if (v == null) {
+			removeAttribute(
+					CURRENT_VIEW);
+		} else {
+			UI.getCurrent().getSession().setAttribute(
+					CURRENT_VIEW, v);
 		}
 	}
 

@@ -14,6 +14,8 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
 
 
@@ -22,14 +24,15 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
+	private static Logger logger = Logger.getLogger(SbfDraftRecordDAOMysql.class);
 	public SbfDraftRecordDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
 			ds = (DataSource) envContext.lookup("jdbc/MyDB");
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error setting up context for database connection: " + e.getMessage());
+			logger.error("Stack Trace: " + e);
 		}
 	}
 	
@@ -58,8 +61,8 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 				sbfDraftRecords.add(drafRecord);    				
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Error in getAllDraftRecords() call: " + ex.getMessage());
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -92,8 +95,7 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 			prepStmt.setTimestamp(5, new Timestamp(record.getTimeDrafted().getTime()));
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -124,8 +126,7 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 			prepStmt.setInt(3, record.getLeagueId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {

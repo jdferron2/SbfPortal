@@ -13,6 +13,8 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.utility.PropertyReader;
 
@@ -21,14 +23,14 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
+	private static Logger logger = Logger.getLogger(SbfLeagueDAOMysql.class);
 	public SbfLeagueDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
 			ds = (DataSource) envContext.lookup("jdbc/MyDB");
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Stack Trace: " + e);
 		}
 	}
 	
@@ -54,8 +56,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 				sbfLeagues.add(league);    				
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {

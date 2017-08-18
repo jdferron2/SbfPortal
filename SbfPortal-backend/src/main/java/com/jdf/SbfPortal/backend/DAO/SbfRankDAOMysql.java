@@ -12,6 +12,9 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+
 import com.jdf.SbfPortal.backend.data.SbfRank;
 
 public class SbfRankDAOMysql implements SbfRankDAO {
@@ -19,14 +22,14 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 	InitialContext ctx;
 	Context envContext;
 	DataSource ds;
+	private static Logger logger = Logger.getLogger(SbfRankDAOMysql.class);
 	public SbfRankDAOMysql(){
 		try {
 			ctx = new InitialContext();
 			envContext  = (Context)ctx.lookup("java:/comp/env");
 			ds = (DataSource) envContext.lookup("jdbc/MyDB");
 		} catch (NamingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Stack Trace: " +e);
 		}
 	}
 	public List<SbfRank> getAllSbfRanks(Integer rankSetId) {
@@ -51,8 +54,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 				sbfRanks.add(rank);    				
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -83,8 +85,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			prepStmt.setInt(3, s.getRank());	
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -111,8 +112,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			prepStmt.setInt(2, s.getPlayerId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -141,8 +141,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			prepStmt.setInt(3, rank.getPlayerId());
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {
@@ -168,8 +167,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			prepStmt.setInt(1, userId);
 			prepStmt.execute();
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-			// handle the error
+			logger.error("Stack Trace: ",  ex);
 		}
 		finally {
 			if (conn != null) {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" >
+<log4j:configuration>
+	<!-- Daily Rolling File Appender that compresses old files -->
+	<appender name="RollingAppender" class="org.apache.log4j.DailyRollingFileAppender">
+		<!-- <param name="file" value="${catalina.home}/logs/sbf.log" /> -->
+		<param name="file" value="C:\\Users\\Public\\Documents\\Temp\\sbf.log" />
+		<param name="DatePattern" value="'.'yyyy-MM-dd" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%p] %d %c %M - %m%n" />
+		</layout>
+	</appender>
+
+	<root>
+		<priority value="debug"></priority>
+		<appender-ref ref="RollingAppender" />
+	</root>
+</log4j:configuration>

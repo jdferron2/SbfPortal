@@ -67,6 +67,7 @@ public class MainScreen extends HorizontalLayout {
 		@Override
 		public void afterViewChange(ViewChangeEvent event) {
 			menu.setActiveView(event.getViewName());
+			UserSessionVars.setCurrentView(event.getNewView());;
 		}
 
 	};
