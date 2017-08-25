@@ -26,6 +26,7 @@ public class SbfLeagueService {
 	protected List<SbfUser> sbfUsers;
 	protected List<SbfUserTeam> sbfUserTeams;
 	
+	
 	protected SbfLeagueService(SbfLeagueDAO leagueDao, SbfTeamDAO teamDao, SbfKeeperDAO keeperDao, 
 			SbfUserDAO userDao, SbfUserTeamsDAO userTeamsDao){
 		this.sbfLeagueDao = leagueDao;
@@ -162,6 +163,15 @@ public class SbfLeagueService {
 			}
 		}
 		return 0;
+	}
+	
+	public synchronized void removeRankSetAsDefault(int rankSetId){
+		for(SbfUserTeam t : getAllSbfUserTeams()){
+			if(t.getDefaultRankSetId() == rankSetId){
+				t.setDefaultRankSetId(0);
+				this.updateSbfUserTeam(t);
+			}
+		}
 	}
 	
 	public synchronized SbfUserTeam getSbfUserTeamForLeagueAndUser(SbfUser u, SbfLeague l){

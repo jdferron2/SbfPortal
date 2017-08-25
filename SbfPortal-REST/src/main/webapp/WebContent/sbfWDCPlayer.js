@@ -22,7 +22,7 @@
 		var ranksCols = [
 			{ id : "playerId", alias : "playerId", dataType : tableau.dataTypeEnum.int },
 			{ id : "rank", alias : "rank", dataType : tableau.dataTypeEnum.int },
-			{ id : "sbfId", alias : "sbfId", dataType : tableau.dataTypeEnum.int }
+			{ id : "rankSetId", alias : "rankSetId", dataType : tableau.dataTypeEnum.int }
 			];
 		var ranksTable = {
 				id : "sbfRankDataFeed",
@@ -33,7 +33,7 @@
 		var draftCols = [
 			{ id : "playerId", alias : "playerId", dataType : tableau.dataTypeEnum.int },
 			{ id : "timeDrafted", alias : "timeDrafted", dataType : tableau.dataTypeEnum.datetime },
-			{ id : "sbfId", alias : "sbfId", dataType : tableau.dataTypeEnum.int },
+			{ id : "teamId", alias : "teamId", dataType : tableau.dataTypeEnum.int },
 			{ id : "slotDrafted", alias : "slotDrafted", dataType : tableau.dataTypeEnum.int }
 			];
 		var draftTable = {
@@ -45,7 +45,8 @@
 		var sbfTeamsCols = [
 			{ id : "ownerName", alias : "ownerName", dataType : tableau.dataTypeEnum.string },
 			{ id : "draftSlot", alias : "draftSlot", dataType : tableau.dataTypeEnum.int },
-			{ id : "sbfId", alias : "sbfId", dataType : tableau.dataTypeEnum.int },
+			{ id : "userId", alias : "userId", dataType : tableau.dataTypeEnum.int },
+			{ id : "teamId", alias : "teamId", dataType : tableau.dataTypeEnum.int },
 			{ id : "leagueId", alias : "leagueId", dataType : tableau.dataTypeEnum.int }
 			];
 		var sbfTeamsTable = {
@@ -60,7 +61,7 @@
 	myConnector.getData = function(table, doneCallback) {
 		var tableData = [];
 		if (table.tableInfo.id == "playerDataFeed") {
-			$.getJSON("http://localhost:8080/SbfPortal-REST/REST/playerservice/players/", function(resp) {
+			$.getJSON("http://sbf.hopto.org/SbfPortal-REST/REST/playerservice/players/", function(resp) {
 				//var players = resp.players;
 
 				// Iterate over the JSON object
@@ -82,7 +83,7 @@
 				doneCallback();
 			});
 		} else if (table.tableInfo.id == "sbfRankDataFeed"){
-			$.getJSON("http://localhost:8080/SbfPortal-REST/REST/playerservice/ranks/sbfid/1/", function(resp) {
+			$.getJSON("http://sbf.hopto.org/SbfPortal-REST/REST/playerservice/ranks/sbfid/1/", function(resp) {
 				//var ranks = resp.sbfRanks;
 				
 				// Iterate over the JSON object
@@ -90,7 +91,7 @@
 					tableData.push({
 						"playerId": resp[i].playerId,
 						"rank": resp[i].rank,
-						"sbfId": resp[i].sbfId
+						"rankSetId": resp[i].rankSetId
 					});
 				}
 
@@ -98,7 +99,7 @@
 				doneCallback();
 			});
 		}else if (table.tableInfo.id == "sbfDraftDataFeed"){
-			$.getJSON("http://localhost:8080/SbfPortal-REST/REST/sbfdraftservice/draftresults/1/", function(resp) {
+			$.getJSON("http://sbf.hopto.org/SbfPortal-REST/REST/sbfdraftservice/draftresults/1/", function(resp) {
 				//var draftPicks = resp.draftPicks;
 				
 				// Iterate over the JSON object
@@ -106,7 +107,7 @@
 					tableData.push({
 						"playerId": resp[i].playerId,
 						"timeDrafted": resp[i].timeDrafted,
-						"sbfId": resp[i].sbfId,
+						"teamId": resp[i].teamId,
 						"slotDrafted": resp[i].slotDrafted
 					});
 				}				
@@ -114,7 +115,7 @@
 				doneCallback();
 			});
 		}else if (table.tableInfo.id == "sbfTeamsDataFeed"){
-			$.getJSON("http://localhost:8080/SbfPortal-REST/REST/sbfdraftservice/sbfteams/1/", function(resp) {
+			$.getJSON("http://sbf.hopto.org/SbfPortal-REST/REST/sbfdraftservice/sbfteams/1/", function(resp) {
 				//var draftPicks = resp.draftPicks;
 				
 				// Iterate over the JSON object
@@ -122,7 +123,8 @@
 					tableData.push({
 						"ownerName": resp[i].ownerName,
 						"draftSlot": resp[i].draftSlot,
-						"sbfId": resp[i].sbfId,
+						"teamId": resp[i].teamId,
+						"userId": resp[i].userId,
 						"leagueId": resp[i].leagueId
 					});
 				}				

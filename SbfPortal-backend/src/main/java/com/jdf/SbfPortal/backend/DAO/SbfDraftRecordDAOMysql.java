@@ -34,7 +34,7 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 			logger.error("Error setting up context for database connection: " + e.getMessage());
 			logger.error("Stack Trace: " + e);
 		}
-	}
+	} 
 	
 
 	public synchronized List<SbfDraftRecord> getAllDraftRecords(Integer leagueId) {

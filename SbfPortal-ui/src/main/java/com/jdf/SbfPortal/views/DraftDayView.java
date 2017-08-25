@@ -353,7 +353,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				if (randomInt < 4 && icingEnabled) isAWinner=true;
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(isAWinner);
+						((DraftDisplayPopupUI) t).processPick(isAWinner, false);
 					}else if(t.getClass().equals(DraftBoardPopupUI.class)){
 						((DraftBoardPopupUI) t).addDraftSelection(r);
 					}
@@ -371,12 +371,10 @@ public class DraftDayView extends HorizontalLayout implements View {
 				SbfDraftRecord r = (SbfDraftRecord)clickEvent.getItem();
 				draftService.deleteSbfDraftRecord(r);
 				draftedGrid.getDataProvider().refreshAll();
-				Player p = playerService.getPlayerById(r.getPlayerId());
-				//availableGrid.getDataProvider().refreshItem(p);
 				playersDataProvider.refreshAll();
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(false);
+						((DraftDisplayPopupUI) t).processPick(false ,true);
 					}else if(t.getClass().equals(DraftBoardPopupUI.class)){
 						((DraftBoardPopupUI) t).removeDraftSelection(r);
 					}
@@ -416,7 +414,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			{
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(false);
+						((DraftDisplayPopupUI) t).processPick(false, false);
 					}			
 				}
 				resumeWindow.close();
@@ -434,6 +432,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				public void run() {      
 					playersDataProvider.refreshAll();
 					draftedPlayersDataProvider.refreshAll();
+					setOnTheClockCaption();
 //					Notification notify = new Notification("Something changed.");
 //					notify.setDelayMsec(2000);
 //					notify.show(Page.getCurrent());

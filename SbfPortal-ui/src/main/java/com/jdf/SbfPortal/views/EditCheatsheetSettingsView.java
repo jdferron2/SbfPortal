@@ -24,7 +24,7 @@ import com.vaadin.ui.themes.ValoTheme;
 
 @SuppressWarnings("serial")
 public class EditCheatsheetSettingsView extends VerticalLayout implements View {
-	public static final String NAME = "Cheatsheet Settings";
+	public static final String NAME = "My Cheatsheets";
 
 	private SbfLeagueService leagueService;
 
@@ -72,14 +72,15 @@ public class EditCheatsheetSettingsView extends VerticalLayout implements View {
 		cheatsheetGrid.setCaption("My Cheatsheets");
 		cheatsheetGrid.setItems(cheatsheets);
 
-		SbfRankSet defRankSet = UserSessionVars.getRankSet();
+		SbfRankSet defRankSet = UserSessionVars.getPlayerService().getSbfRankSetByIdAndUser(UserSessionVars.getLeagueService().getDefaultRankSetForLeagueAndUser(
+				UserSessionVars.getCurrentUser(), UserSessionVars.getCurrentLeague()), UserSessionVars.getCurrentUser().getUserId());
 	//	cheatsheetGrid.setSizeFull();
 		cheatsheetGrid.setSelectionMode(SelectionMode.SINGLE);
 		cheatsheetGrid.addColumn(SbfRankSet::getRankSetName).setCaption("Name").setId("nameColumn");
 		cheatsheetGrid.addColumn(rs->rs==defRankSet ? "Yes" : "No"
 				).setCaption("Default").setId("defaultColumn");
 		cheatsheetGrid.addColumn(s->"Edit", editButtonRenderer()).setId("EditColumn");
-
+		cheatsheetGrid.addColumn(s->"Delete", deleteButtonRenderer()).setId("DeleteColumn");
 		cheatsheetProvider = (ListDataProvider<SbfRankSet>) cheatsheetGrid.getDataProvider();
 
 		return cheatsheetGrid;
@@ -95,12 +96,58 @@ public class EditCheatsheetSettingsView extends VerticalLayout implements View {
 		});
 		return editButtonRenderer;
 	}
+	
+	@SuppressWarnings({ "rawtypes" })
+	private ButtonRenderer deleteButtonRenderer (){
+		ButtonRenderer<Object> deleteButtonRenderer = new ButtonRenderer<Object>();
+		deleteButtonRenderer.addClickListener(clickEvent -> {
+			SbfRankSet s = (SbfRankSet)clickEvent.getItem();
+			UI.getCurrent().addWindow(getConfirmWindow(s));
+		});
+		return deleteButtonRenderer;
+	}
 
+	private Window getConfirmWindow(SbfRankSet s){
+		Window subWindow = new Window("Delete " + s.getRankSetName() + "?");
+		subWindow.setModal(true);
+		subWindow.setClosable(false);
+		subWindow.setResizable(false);
+		Button yes = new Button("Yes, delete");
+		Button no = new Button("NO! DON'T DO IT!");
+		
+		yes.addClickListener(new Button.ClickListener()
+		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+		{
+			//if using, use default, delete it & refresh dataset & close window
+			if (UserSessionVars.getRankSet() == s){
+				UserSessionVars.setRankSet(UserSessionVars.getPlayerService().getGlobalDefaultRankSet());
+			}
+			UserSessionVars.getLeagueService().removeRankSetAsDefault(s.getRankSetId());
+			UserSessionVars.getPlayerService().deleteRankSet(s);
+			cheatsheetProvider.refreshAll();
+			subWindow.close();
 
+		} });
+		
+		no.addClickListener(new Button.ClickListener()
+		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+		{
+			subWindow.close();
+
+		} });
+		HorizontalLayout yesNoLayout = new HorizontalLayout();
+		yesNoLayout.setMargin(true);
+		yesNoLayout.addComponents(yes, no);
+		subWindow.setContent(yesNoLayout);
+		return subWindow;
+		
+	}
+	
 
 
 	private Window getEditWindow(SbfRankSet s){
-		boolean isDefault = UserSessionVars.getRankSet() == s;
+		boolean isDefault = UserSessionVars.getPlayerService().getSbfRankSetByIdAndUser(UserSessionVars.getLeagueService().getDefaultRankSetForLeagueAndUser(
+				UserSessionVars.getCurrentUser(), UserSessionVars.getCurrentLeague()), UserSessionVars.getCurrentUser().getUserId()) == s;
 		String cheatsheetName = s.getRankSetName();
 		if (cheatsheetName == null) cheatsheetName = "";
 		Window subWindow = new Window(cheatsheetName);

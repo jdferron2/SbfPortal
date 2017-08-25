@@ -158,6 +158,12 @@ public class PlayerService {
 		sbfRanksLookup.remove(rankSetId);
 	}
 	
+	public void deleteRankSet(SbfRankSet r){
+		getAllSbfRankSets(r.getUserId()).remove(r);
+		sbfRankSetsDao.deleteSbfRankSet(r);
+		deleteAllSbfRanks(r.getRankSetId());
+	}
+	
 	public void deleteSbfRank(SbfRank r){
 		sbfRankDao.deleteSbfRank(r);
 		sbfRanksLookup.get(r.getRankSetId()).remove(r);

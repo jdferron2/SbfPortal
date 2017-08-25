@@ -84,11 +84,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			Class.forName("com.mysql.jdbc.Driver").newInstance();
-
-			conn = DriverManager.getConnection("jdbc:mysql://localhost/SBF","root",PropertyReader.getProperty("adminPass"));
-			//stmt = conn.createStatement();
-
+			conn = ds.getConnection();
 			String sql = "insert into players "
 					+ "(player_id, pro_rank, full_name, first_name, last_name, height, jersey_num, position, nfl_team, weight, DOB) "
 					+ "values (?,?,?,?,?,?,?,?,?,?,?)";

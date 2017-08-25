@@ -47,7 +47,6 @@ public class BasicAccessControl implements AccessControl {
 		UserSessionVars.setCurrentLeague(curLeague);
 		UserSessionVars.setCurrentUser(u);
 
-		UserSessionVars.resetRankSetToDefault();
 		UserSessionVars.setPlayerService(playerService);
 		UserSessionVars.setLeagueService(leagueService);
 		UserSessionVars.setDraftService(draftService);

@@ -176,6 +176,21 @@ $login-background-color: $editor-background-color !default;
 	color: white;
 }
 
+.cheatsheetGridTitle{
+	.v-button{
+		background-color:blue;
+	}
+	.v-button:after{
+		content:none;
+	}
+	
+	.v-filterselect-input{
+		font-weight:bold;
+		font-size: 16px;
+	}
+}
+
+
 .login-screen {
     background: $editor-background-color;
 
@@ -255,6 +270,5 @@ button:active {
 	position:relative;
 	top:1px;
 }
-
 
 }

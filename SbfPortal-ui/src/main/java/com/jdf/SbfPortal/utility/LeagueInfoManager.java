@@ -222,7 +222,7 @@ public class LeagueInfoManager {
 		draftService.addSbfPickTrade(trade);
 	}
 
-	public void refreshCheatsheetToDefault(SbfRankSet c){
+	public void resetCheatsheetToDefaultRanks(SbfRankSet c){
 		for(Player player : playerService.getAllPlayers()){
 			if(player.getProRank() < 500 && player.getProRank() != 0){
 				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank());

@@ -14,18 +14,16 @@
 		<sourceDirectory>src</sourceDirectory>
 		<plugins>
 			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.0.0</version>
 				<configuration>
-					<warSourceDirectory>WebContent</warSourceDirectory>
+					<webResources>
+						<esource>
+							<directory>src/main/webapp</directory>
+						</esource>
+					</webResources>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
 			</plugin>
 		</plugins>

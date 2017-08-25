@@ -1,5 +1,10 @@
 package com.jdf.SbfPortal.UiComponents;
 
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+
+import com.jdf.SbfPortal.SbfUI;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
@@ -10,9 +15,11 @@ import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
+import com.vaadin.server.FileResource;
 import com.vaadin.server.Resource;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.server.VaadinService;
 import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
@@ -34,9 +41,10 @@ public class DraftDisplayPopupUI extends UI {
 	Integer leagueId;
 	boolean viewBuilt = false;
 	boolean pickIsInDisplayed = false;
-	private Audio FIREWORKSSOUND = new Audio(null, new ThemeResource("audio/fireworks2.mp3"));
+	//private Audio FIREWORKSSOUND = new Audio(null, new ThemeResource("audio/fireworks2.mp3"));
 	private Audio TADASOUND = new Audio(null, new ThemeResource("audio/tada.mp3"));
-	private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
+	//private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
+	private Audio TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/Lennon.mp3"));
 
 	VerticalLayout mainContent;
 	VerticalLayout pickIsInContent;
@@ -101,9 +109,10 @@ public class DraftDisplayPopupUI extends UI {
 		selectedPlayerLayout.setComponentAlignment(selectedPlayerLabel, Alignment.MIDDLE_CENTER);
 
 		topBannerLayout.addComponents(selectedPlayerLayout, getSbfLogo(), lastPickLayout);
-		mainContent.addComponents(topBannerLayout, onTheClockLayout);
+		mainContent.addComponents(topBannerLayout, onTheClockLayout,TEAMTHEMESONG);
+		TEAMTHEMESONG.setShowControls(false); TEAMTHEMESONG.setSizeUndefined();
 		mainContent.setExpandRatio(topBannerLayout, 1);
-
+		mainContent.setExpandRatio(TEAMTHEMESONG, 0);
 		setContent(mainContent);
 	}
 
@@ -163,11 +172,11 @@ public class DraftDisplayPopupUI extends UI {
 	}
 
 	void buildWinnerDisplay(){
-		FIREWORKSSOUND.setShowControls(false); FIREWORKSSOUND.setSizeUndefined();
+		//FIREWORKSSOUND.setShowControls(false); FIREWORKSSOUND.setSizeUndefined();
 		TADASOUND.setShowControls(false); TADASOUND.setSizeUndefined();
-		CHEERINGSOUND.setShowControls(false); CHEERINGSOUND.setSizeUndefined();
+		
 		VerticalLayout soundLayout = new VerticalLayout();
-		soundLayout.addComponents(FIREWORKSSOUND,TADASOUND,CHEERINGSOUND);
+		soundLayout.addComponents(TADASOUND);
 
 		winnerContent = new VerticalLayout();
 		winnerContent.setSizeFull();
@@ -202,7 +211,7 @@ public class DraftDisplayPopupUI extends UI {
 		winnerContent.setExpandRatio(soundLayout, 0);
 	}
 
-	public synchronized void processPick(boolean isAWinner){
+	public synchronized void processPick(boolean isAWinner, boolean isUndo){
 		access(new Runnable() {
 			@Override
 			public void run() {      
@@ -216,10 +225,36 @@ public class DraftDisplayPopupUI extends UI {
 					setLatestPickValue();
 					setSelectedPlayerLabel();
 					setContent(mainContent);
+					if(!isUndo)	playThemeSong();
 				}
 
 			}
 		});
+	}
+	
+	private void playThemeSong(){
+		
+		SbfDraftRecord latestPick = draftService.getSbfDraftRecordByPickNum(leagueMgr.getCurrentPick()-1, leagueId);
+		SbfTeam team = leagueService.getSbfTeamByTeamId(latestPick.getTeamId(), leagueId);
+		String teamName = team.getOwnerName();
+		String basepath = VaadinService.getCurrent()
+                .getBaseDirectory().getAbsolutePath();
+		File soundFile = new File(
+				basepath + "/WEB-INF/music/" + teamName + ".mp3");
+		if (soundFile.exists()){
+			FileResource resource = new FileResource(soundFile);
+			mainContent.removeComponent(TEAMTHEMESONG);
+			TEAMTHEMESONG = new Audio(null, resource);
+			mainContent.addComponent(TEAMTHEMESONG);
+			TEAMTHEMESONG.setShowControls(false); TEAMTHEMESONG.setSizeUndefined();
+			mainContent.setExpandRatio(TEAMTHEMESONG, 0);
+			
+			TEAMTHEMESONG.play();
+		}else{
+			//TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/tada.mp3"));
+		}
+		
+
 	}
 }
 
