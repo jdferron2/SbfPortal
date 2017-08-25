@@ -26,6 +26,8 @@ public class SbfLeagueService {
 	protected List<SbfUser> sbfUsers;
 	protected List<SbfUserTeam> sbfUserTeams;
 	
+	protected Integer lastRetrievedLeagueIdKeepers;
+	
 	
 	protected SbfLeagueService(SbfLeagueDAO leagueDao, SbfTeamDAO teamDao, SbfKeeperDAO keeperDao, 
 			SbfUserDAO userDao, SbfUserTeamsDAO userTeamsDao){
@@ -100,7 +102,8 @@ public class SbfLeagueService {
 	}
 	
 	public synchronized List<SbfKeeper> getAllSbfKeepers(int leagueId){
-		if (sbfKeepers == null) {
+		if (sbfKeepers == null || lastRetrievedLeagueIdKeepers != leagueId) {
+			lastRetrievedLeagueIdKeepers = leagueId;
 			sbfKeepers = sbfKeeperDao.getAllSbfKeepers(leagueId);
 		}
 		return sbfKeepers;

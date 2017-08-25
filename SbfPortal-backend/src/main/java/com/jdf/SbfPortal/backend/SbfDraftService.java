@@ -45,7 +45,9 @@ public class SbfDraftService {
 	}
 	
 	public void removeSbfDraftRecordFromSession(SbfDraftRecord r) {
-		this.getAllDraftRecords(r.getLeagueId()).remove(r);
+		SbfDraftRecord removeMe = this.getAllDraftRecords(r.getLeagueId()).stream().
+				filter(d->d.getPlayerId()==r.getPlayerId()).findFirst().orElse(null);
+		if(removeMe != null) getAllDraftRecords(r.getLeagueId()).remove(removeMe);
 	}
 	
 	public synchronized void deleteSbfDraftRecord(SbfDraftRecord rec){
