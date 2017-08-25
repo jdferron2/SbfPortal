@@ -10,6 +10,7 @@ import com.jdf.SbfPortal.authentication.BasicAccessControl;
 import com.jdf.SbfPortal.authentication.LoginScreen;
 import com.jdf.SbfPortal.authentication.LoginScreen.LoginListener;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
+import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.MessageHandler;
 import com.jdf.SbfPortal.utility.UncaughtExceptionHandler;
@@ -37,6 +38,7 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 	boolean initialized = false;
 	private MessageHandler handler;
 	private static Logger logger;
+	private Integer leagueId;
 
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
@@ -102,6 +104,7 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 	}
 
 	protected void showMainView() {
+		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
 		addStyleName(ValoTheme.UI_WITH_MENU);
 		setContent(new MainScreen(SbfUI.this));
 		if (getNavigator().getState().equals("")){
@@ -118,6 +121,11 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 		DOMConfigurator.configure(url);
 		logger = Logger.getLogger(SbfUI.class);
 		logger.info("Configured Log4J for the application:");
+	}
+
+	@Override
+	public Integer getLeagueId() {
+		return leagueId;
 	}
 
 }

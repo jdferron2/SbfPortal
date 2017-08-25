@@ -358,7 +358,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 						((DraftBoardPopupUI) t).addDraftSelection(r);
 					}
 				}
-				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, new Object[] {r, isAWinner});
+				Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, new Object[] {r, isAWinner});
 				setOnTheClockCaption();
 			});
 			return draftButtonRenderer;
@@ -379,7 +379,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 						((DraftBoardPopupUI) t).removeDraftSelection(r);
 					}
 				}
-				Broadcaster.broadcast(UI.getCurrent().getSession(), BroadcastCommands.UNDO_DRAFT_PICK, new Object[] {r});
+				Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.UNDO_DRAFT_PICK, new Object[] {r});
 
 				setOnTheClockCaption();
 			});

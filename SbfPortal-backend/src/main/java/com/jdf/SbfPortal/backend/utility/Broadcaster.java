@@ -20,6 +20,7 @@ public class Broadcaster implements Serializable {
     public interface BroadcastListener {
         void receiveBroadcast(String message);
 		void receiveBroadcast(VaadinSession ses, String command, Object[] args);
+		Integer getLeagueId();
     }
 
     private static LinkedList<BroadcastListener> listeners =
@@ -48,15 +49,17 @@ public class Broadcaster implements Serializable {
             });
     }
     
-    public static synchronized void broadcast(
+    public static synchronized void broadcast(Integer leagueId,
             final VaadinSession ses, final String command, final Object[] args) {
     	logger.info("Broadcast command "+ command + " is being sent to " + listeners.size() + " clients...");
-        for (final BroadcastListener listener: listeners)
+        for (final BroadcastListener listener: listeners){
+        	if( listener.getLeagueId() == leagueId)
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
                     listener.receiveBroadcast(ses, command, args);
                 }
             });
+        }
     }
 }
