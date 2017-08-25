@@ -13,6 +13,8 @@ public class SbfDraftService {
 	protected List<SbfDraftRecord> draftRecords; 
 	protected SbfPickTradesDAO sbfDraftPickDao;
 	protected SbfDraftRecordDAO sbfDraftRecordDao;
+	protected Integer			lastRetrievedLeagueIdPickTrades;
+	protected Integer			lastRetrievedLeagueIdDraftRecords;
 
 	protected SbfDraftService(SbfPickTradesDAO sbfDraftPickDao, SbfDraftRecordDAO sbfDraftRecordDao){
 		this.sbfDraftPickDao = sbfDraftPickDao;
@@ -56,14 +58,16 @@ public class SbfDraftService {
 	}
 	
 	public synchronized List<SbfPickTrade> getAllSbfPickTrades(Integer leagueId) {
-		if (sbfDraftPicks == null) {
+		if (sbfDraftPicks == null || lastRetrievedLeagueIdPickTrades != leagueId) {
+			lastRetrievedLeagueIdPickTrades=leagueId;
 			sbfDraftPicks = sbfDraftPickDao.getAllSbfPickTrades(leagueId);
 		}
 		return sbfDraftPicks;
 	}
 	
 	public synchronized List<SbfDraftRecord> getAllDraftRecords(Integer leagueId) {
-		if (draftRecords == null) {
+		if (draftRecords == null || lastRetrievedLeagueIdDraftRecords != leagueId) {
+			lastRetrievedLeagueIdDraftRecords = leagueId;
 			draftRecords = sbfDraftRecordDao.getAllDraftRecords(leagueId);
 		}
 		return draftRecords;
