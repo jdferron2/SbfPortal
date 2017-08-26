@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 import com.jdf.SbfPortal.SbfUI;
+import com.jdf.SbfPortal.SessionAttributes;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
@@ -46,6 +47,8 @@ public class DraftDisplayPopupUI extends UI {
 	//private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
 	private Audio TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/Lennon.mp3"));
 
+	private boolean themeSongsEnabled = true;
+	
 	VerticalLayout mainContent;
 	VerticalLayout pickIsInContent;
 	VerticalLayout winnerContent;
@@ -214,7 +217,13 @@ public class DraftDisplayPopupUI extends UI {
 	public synchronized void processPick(boolean isAWinner, boolean isUndo){
 		access(new Runnable() {
 			@Override
-			public void run() {      
+			public void run() {     
+				if(UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED) == null){
+					UI.getCurrent().getSession().setAttribute(SessionAttributes.THEME_SONGS_ENABLED, true);
+					themeSongsEnabled = true;
+				}else{
+					themeSongsEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED);
+				}
 				if (isAWinner){
 					setContent(winnerContent);
 					TADASOUND.play();
@@ -225,7 +234,7 @@ public class DraftDisplayPopupUI extends UI {
 					setLatestPickValue();
 					setSelectedPlayerLabel();
 					setContent(mainContent);
-					if(!isUndo)	playThemeSong();
+					if(!isUndo && themeSongsEnabled) playThemeSong();
 				}
 
 			}

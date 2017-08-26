@@ -47,7 +47,7 @@ public class AdminView extends VerticalLayout implements View  {
 	private SbfLeagueService leagueService;
 	private LeagueInfoManager leagueMgr;
 	private boolean icingEnabled;
-
+	private boolean themeSongsEnabled;
 	public AdminView(){
 
 	}
@@ -65,6 +65,13 @@ public class AdminView extends VerticalLayout implements View  {
 		}else{
 			icingEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
 		}
+		
+		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED) == null){
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.THEME_SONGS_ENABLED, true);
+			themeSongsEnabled = true;
+		}else{
+			themeSongsEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
+		}
 		if(!viewBuilt){
 			buildView();
 			viewBuilt=true;
@@ -81,6 +88,13 @@ public class AdminView extends VerticalLayout implements View  {
 
 		enableIcing.addValueChangeListener(event ->
 		UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, enableIcing.getValue())
+				);
+		
+		CheckBox enableThemeSongs = new CheckBox("Theme Songs Enabled");
+		enableThemeSongs.setValue(themeSongsEnabled);
+
+		enableThemeSongs.addValueChangeListener(event ->
+		UI.getCurrent().getSession().setAttribute(SessionAttributes.THEME_SONGS_ENABLED, enableThemeSongs.getValue())
 				);
 
 		setSpacing(true);
@@ -205,7 +219,7 @@ public class AdminView extends VerticalLayout implements View  {
 		tradeLayout.addComponent(team2PickSelector,1,1);
 		HorizontalLayout buttonLayout = new HorizontalLayout();
 		buttonLayout.addComponents(resetPlayerList, resetMyRanks,resetDefaultRanks);
-		addComponents(enableIcing, buttonLayout, new Label("PROCESS TRADE"), tradeLayout);
+		addComponents(enableIcing, enableThemeSongs, buttonLayout, new Label("PROCESS TRADE"), tradeLayout);
 	}
 
 	public ComboBox<Integer> createTradeBox(int teamId){

@@ -17,14 +17,15 @@ import com.jdf.SbfPortal.backend.data.SbfRankSet;
 
 public class PlayerService {
 	private List<Player> players;
-	//private List<SbfRank> sbfRanks;
+	private List<SbfRank> sbfRanks;
 	private List<SbfRank> sbfRankUpdateList;
 	private List<SbfRankSet> sbfRankSets;
-	private HashMap<Integer, List<SbfRank>> sbfRanksLookup = new HashMap<Integer, List<SbfRank>>();
+	//private HashMap<Integer, List<SbfRank>> sbfRanksLookup = new HashMap<Integer, List<SbfRank>>();
 	private PlayerDAO playerDao;
 	private SbfRankDAO sbfRankDao;
 	private static Logger logger = Logger.getLogger(PlayerService.class);
 	private SbfRankSetsDAO sbfRankSetsDao;
+	private Integer lastLoadedRankSetId;
 
 	PlayerService(PlayerDAO pDao, SbfRankDAO sDao, SbfRankSetsDAO rsDao){
 		this.playerDao = pDao;
@@ -51,10 +52,11 @@ public class PlayerService {
 	}
 
 	public List<SbfRank> getAllSbfRanks(Integer rankSetId) {
-		if(!sbfRanksLookup.containsKey(rankSetId)){
-			sbfRanksLookup.put(rankSetId, sbfRankDao.getAllSbfRanks(rankSetId));
+		if(sbfRanks == null || lastLoadedRankSetId != rankSetId){
+			sbfRanks = sbfRankDao.getAllSbfRanks(rankSetId);
+			lastLoadedRankSetId=rankSetId;
 		}
-		return sbfRanksLookup.get(rankSetId);
+		return sbfRanks;
 	}
 	
 	public List<SbfRankSet> getAllSbfRankSets(Integer userId) {
@@ -155,7 +157,7 @@ public class PlayerService {
 		for (SbfRank r : getAllSbfRanks(rankSetId)){
 			sbfRankDao.deleteSbfRank(r);
 		}
-		sbfRanksLookup.remove(rankSetId);
+		sbfRanks = null;
 	}
 	
 	public void deleteRankSet(SbfRankSet r){
@@ -166,7 +168,7 @@ public class PlayerService {
 	
 	public void deleteSbfRank(SbfRank r){
 		sbfRankDao.deleteSbfRank(r);
-		sbfRanksLookup.get(r.getRankSetId()).remove(r);
+		getAllSbfRanks(r.getRankSetId()).remove(r);
 	}
 	
 	public synchronized SbfRankSet getGlobalDefaultRankSet() {
