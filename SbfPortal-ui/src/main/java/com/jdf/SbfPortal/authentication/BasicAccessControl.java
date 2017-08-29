@@ -68,6 +68,7 @@ public class BasicAccessControl implements AccessControl {
 	}
 
 	public boolean isUserLeagueManager(){
+		if (isUserInRole("admin")) return true;
 		if (UserSessionVars.getCurrentUser().getUserId() == UserSessionVars.getCurrentLeague().getLeagueManager())
 			return true;
 
