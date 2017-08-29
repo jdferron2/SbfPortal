@@ -22,8 +22,8 @@ public class SbfDraftService {
 	}
 	
 	public synchronized void addSbfPickTrade(SbfPickTrade pick){
+		getAllSbfPickTrades(pick.getLeagueId()).add(pick);
 		sbfDraftPickDao.insertSbfPickTrade(pick);
-		sbfDraftPicks.add(pick);
 	}
 	
 	public synchronized void updateSbfPickTrade(SbfPickTrade pick){
@@ -31,13 +31,13 @@ public class SbfDraftService {
 	}
 
 	public synchronized void deleteSbfPickTrade(SbfPickTrade pick){
+		getAllSbfPickTrades(pick.getLeagueId()).remove(pick);
 		sbfDraftPickDao.deleteSbfPickTrade(pick);
-		sbfDraftPicks.remove(pick);
 	}
 	
 	public synchronized void addSbfDraftRecord(SbfDraftRecord rec){
-		sbfDraftRecordDao.insertDraftRecord(rec);
 		this.getAllDraftRecords(rec.getLeagueId()).add(rec);
+		sbfDraftRecordDao.insertDraftRecord(rec);
 	}
 	
 	public synchronized void addSbfDraftRecordtoSession(SbfDraftRecord rec){
@@ -51,8 +51,8 @@ public class SbfDraftService {
 	}
 	
 	public synchronized void deleteSbfDraftRecord(SbfDraftRecord rec){
-		sbfDraftRecordDao.deleteDraftRecord(rec);
 		this.getAllDraftRecords(rec.getLeagueId()).remove(rec);
+		sbfDraftRecordDao.deleteDraftRecord(rec);
 	}
 
 	public synchronized void updateSbfDraftRecord(SbfDraftRecord rec){

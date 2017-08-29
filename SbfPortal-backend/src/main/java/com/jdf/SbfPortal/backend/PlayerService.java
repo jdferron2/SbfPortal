@@ -36,14 +36,14 @@ public class PlayerService {
 	//	@GET 
 	//	@Path("/players") 
 	//	@Produces(MediaType.APPLICATION_XML) 
-	public List<Player> getAllPlayers() {
+	public synchronized List<Player> getAllPlayers() {
 		if (players == null) {
 			players = playerDao.getAllPlayers();
 		}
 		return players;
 	}
 	
-	public List<Player> getTopNPlayers(int maxRank) {
+	public synchronized List<Player> getTopNPlayers(int maxRank) {
 		List<Player> rankedPlayers = new ArrayList<Player>();
 		for(Player p : getAllPlayers()){
 			if (p.getProRank() < maxRank && p.getProRank() != 0) rankedPlayers.add(p);			
@@ -51,7 +51,7 @@ public class PlayerService {
 		return rankedPlayers;
 	}
 
-	public List<SbfRank> getAllSbfRanks(Integer rankSetId) {
+	public synchronized List<SbfRank> getAllSbfRanks(Integer rankSetId) {
 		if(sbfRanks == null || lastLoadedRankSetId != rankSetId){
 			sbfRanks = sbfRankDao.getAllSbfRanks(rankSetId);
 			lastLoadedRankSetId=rankSetId;
@@ -59,14 +59,14 @@ public class PlayerService {
 		return sbfRanks;
 	}
 	
-	public List<SbfRankSet> getAllSbfRankSets(Integer userId) {
+	public synchronized List<SbfRankSet> getAllSbfRankSets(Integer userId) {
 		if (sbfRankSets == null) {
 			sbfRankSets = sbfRankSetsDao.getAllSbfRankSets(userId);
 		}
 		return sbfRankSets;
 	}
 	
-	public List<SbfRank> getTopNSbfRanks(int maxRank, Integer rankSetId) {
+	public synchronized List<SbfRank> getTopNSbfRanks(int maxRank, Integer rankSetId) {
 		List<SbfRank> topNRanks = new ArrayList<SbfRank>();
 		for(SbfRank r : getAllSbfRanks(rankSetId)){
 			if (r.getRank() < maxRank) topNRanks.add(r);			
@@ -140,35 +140,35 @@ public class PlayerService {
 		players = null;
 	}
 
-	public void insertPlayer(Player player) {
+	public synchronized void insertPlayer(Player player) {
 		playerDao.insertPlayer(player);	
 	}
 
-	public void updatePlayer(Player player) {
+	public synchronized void updatePlayer(Player player) {
 		playerDao.updatePlayer(player);	
 	}
 
-	public void insertSbfRank(SbfRank rank) {
-		sbfRankDao.insertSbfRank(rank);
+	public synchronized void insertSbfRank(SbfRank rank) {
 		getAllSbfRanks(rank.getRankSetId()).add(rank);
+		sbfRankDao.insertSbfRank(rank);
 	}
 
-	public void deleteAllSbfRanks(int rankSetId) {
+	public synchronized void deleteAllSbfRanks(int rankSetId) {
 		for (SbfRank r : getAllSbfRanks(rankSetId)){
 			sbfRankDao.deleteSbfRank(r);
 		}
 		sbfRanks = null;
 	}
 	
-	public void deleteRankSet(SbfRankSet r){
+	public synchronized void deleteRankSet(SbfRankSet r){
 		getAllSbfRankSets(r.getUserId()).remove(r);
 		sbfRankSetsDao.deleteSbfRankSet(r);
 		deleteAllSbfRanks(r.getRankSetId());
 	}
 	
-	public void deleteSbfRank(SbfRank r){
-		sbfRankDao.deleteSbfRank(r);
+	public synchronized void deleteSbfRank(SbfRank r){
 		getAllSbfRanks(r.getRankSetId()).remove(r);
+		sbfRankDao.deleteSbfRank(r);
 	}
 	
 	public synchronized SbfRankSet getGlobalDefaultRankSet() {
@@ -182,9 +182,9 @@ public class PlayerService {
 	}
 	
 	
-	public void insertSbfRankSet(SbfRankSet s){
-		sbfRankSetsDao.insertSbfRankSet(s);
+	public synchronized void insertSbfRankSet(SbfRankSet s){
 		getAllSbfRankSets(s.getUserId()).add(s);
+		sbfRankSetsDao.insertSbfRankSet(s);
 	}
 
 }
