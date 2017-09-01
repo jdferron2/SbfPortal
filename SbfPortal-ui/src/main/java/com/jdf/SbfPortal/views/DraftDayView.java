@@ -350,7 +350,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				//availableGrid.getDataProvider().refreshItem(selectedPlayer);
 				playersDataProvider.refreshAll();
 				int randomInt = rand.nextInt(99) + 1;
-				if (randomInt < 5 && icingEnabled) isAWinner=true;
+				if (randomInt < 8 && icingEnabled) isAWinner=true;
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
 						((DraftDisplayPopupUI) t).processPick(isAWinner, false);

@@ -3,6 +3,7 @@ package com.jdf.SbfPortal.UiComponents;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Random;
 
 import com.jdf.SbfPortal.SbfUI;
 import com.jdf.SbfPortal.SessionAttributes;
@@ -47,6 +48,11 @@ public class DraftDisplayPopupUI extends UI {
 	//private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
 	private Audio TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/Lennon.mp3"));
 
+	private Random rand = new Random();
+	Resource iceResource = new ThemeResource("img/ice.jpg");
+	Resource shotResource = new ThemeResource("img/shot.jpg");
+	Image winningImage = new Image(null, iceResource);
+	
 	private boolean themeSongsEnabled = true;
 	
 	VerticalLayout mainContent;
@@ -191,13 +197,11 @@ public class DraftDisplayPopupUI extends UI {
 		Image fireWorksImg2 = new Image(null, res);
 		fireWorksImg2.setSizeFull();
 
-		res = new ThemeResource("img/ice.jpg");
-		Image iceImg = new Image(null, res);
 		//iceImg.setSizeFull();
 		picLayout.setSizeFull();
 
-		picLayout.addComponents(fireWorksImg,iceImg, fireWorksImg2);
-		picLayout.setComponentAlignment(iceImg, Alignment.MIDDLE_CENTER);
+		picLayout.addComponents(fireWorksImg,winningImage, fireWorksImg2);
+		picLayout.setComponentAlignment(winningImage, Alignment.MIDDLE_CENTER);
 
 		Label winnerLabel = new Label();
 		winnerLabel.setValue("YOU WIN!!");
@@ -225,6 +229,12 @@ public class DraftDisplayPopupUI extends UI {
 					themeSongsEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED);
 				}
 				if (isAWinner){
+					int randomInt = rand.nextInt(9) + 1;
+					if(randomInt<=7){
+						winningImage.setSource(iceResource);
+					}else{
+						winningImage.setSource(shotResource);
+					}
 					setContent(winnerContent);
 					TADASOUND.play();
 					//FIREWORKSSOUND.play();
