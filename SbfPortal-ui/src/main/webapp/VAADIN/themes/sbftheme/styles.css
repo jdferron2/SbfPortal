@@ -12612,6 +12612,19 @@ div.v-layout.v-horizontal.v-widget {
 	color: white;
 }
 
+.sbftheme .cheatsheetGridTitle .v-button {
+	background-color: blue;
+}
+
+.sbftheme .cheatsheetGridTitle .v-button:after {
+	content: none;
+}
+
+.sbftheme .cheatsheetGridTitle .v-filterselect-input {
+	font-weight: bold;
+	font-size: 16px;
+}
+
 .sbftheme .login-screen {
 	background: #3b3f42;
 	background-image: url(#{$login-background-image});

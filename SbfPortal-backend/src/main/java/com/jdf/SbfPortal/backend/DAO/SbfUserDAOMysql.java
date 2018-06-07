@@ -81,14 +81,18 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_users "
-					+ "(user_name, password, email) "
-					+ "values (?,?,?)";
+					+ "(user_name, password, email, role) "
+					+ "values (?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setString(1, u.getUserName());
 			prepStmt.setString(2, u.getPassword());	
 			prepStmt.setString(3, u.getEmail());	
+			prepStmt.setString(4, u.getRole());
 			prepStmt.execute();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			u.setUserId(rs.getInt(1));
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
 		}

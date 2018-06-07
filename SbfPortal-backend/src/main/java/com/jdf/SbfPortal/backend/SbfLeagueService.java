@@ -134,9 +134,23 @@ public class SbfLeagueService {
 	
 	public synchronized void insertSbfUserTeam(SbfUserTeam t){
 		sbfUserTeamsDao.insertSbfUserTeam(t);
-		sbfUserTeams.add(t);
+		getAllSbfUserTeams().add(t);
 	}
 	
+	public synchronized void insertSbfTeam(SbfTeam t){
+		sbfTeamDao.insertTeam(t);
+		getAllSbfTeams().add(t);
+	}
+	
+	public synchronized void insertSbfUser(SbfUser u){
+		sbfUserDao.insertSbfUser(u);
+		getAllSbfUsers().add(u);
+	}
+	
+	public synchronized void insertSbfLeague(SbfLeague l){
+		sbfLeagueDao.insertSbfLeague(l);
+		getAllSbfLeagues().add(l);
+	}
 //	public synchronized List<SbfTeam> getAllSbfTeamsForUser(SbfUser u){
 //		List<SbfTeam> teams = new ArrayList<SbfTeam>();
 //		for (SbfTeam t : getAllSbfTeams()){

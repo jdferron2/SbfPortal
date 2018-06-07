@@ -81,16 +81,19 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_teams "
-					+ "(league_id, team_id, owner_name, draft_slot, user_id) "
-					+ "values (?,?,?,?, ?)";
+					+ "(league_id, owner_name, draft_slot, team_name, user_id) "
+					+ "values (?,?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, r.getLeagueId());
-			prepStmt.setInt(2, r.getTeamId());
-			prepStmt.setString(3, r.getOwnerName());	
+			prepStmt.setString(2, r.getOwnerName());	
+			prepStmt.setInt(3, r.getDraftSlot());	
 			prepStmt.setString(4, r.getTeamName());	
 			prepStmt.setInt(5, r.getUserId());
 			prepStmt.execute();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			r.setTeamId(rs.getInt(1));
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
 		}

@@ -55,7 +55,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 		teamsGrid = configureTeamGrid(teamList);
 
-		final HorizontalLayout layout = new HorizontalLayout();
+		final VerticalLayout layout = new VerticalLayout();
 		layout.setMargin(false);
 		layout.setSizeFull();
 		layout.setSpacing(false);
@@ -82,7 +82,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 		teamsDataProvider = (ListDataProvider<SbfTeam>) teamsGrid.getDataProvider();
 
 		teamsDataProvider.setFilter(t->t, t -> teamsGridFilter(t));
-		HeaderRow filterRow = teamsGrid.appendHeaderRow();
+		//HeaderRow filterRow = teamsGrid.appendHeaderRow();
 
 		teamsGrid.sort("DraftslotColumn");
 

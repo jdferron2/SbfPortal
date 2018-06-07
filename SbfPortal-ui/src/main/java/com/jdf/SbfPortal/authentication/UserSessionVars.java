@@ -3,9 +3,11 @@ package com.jdf.SbfPortal.authentication;
 import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
+import com.jdf.SbfPortal.backend.SbfServiceFactory;
 import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.data.SbfRankSet;
 import com.jdf.SbfPortal.backend.data.SbfUser;
+import com.jdf.SbfPortal.utility.AccountInfoManager;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.navigator.View;
 import com.vaadin.server.VaadinRequest;
@@ -19,6 +21,7 @@ public class UserSessionVars {
 	public static final String PLAYER_SERVICE = "PLAYERSERVICE";
 	public static final String LEAGUE_SERVICE = "LEAGUESERVICE";
 	public static final String LEAGUE_MGR = "LEAGUEMGR";
+	public static final String ACCOUNT_MGR = "ACCTMGR";
 	public static final String RANK_SET = "RANKSET";
 	private static final String ACCESS_CONTROL = "ACCESSCONTROL";
 	private static final String CURRENT_VIEW = "CURRENTVIEW";
@@ -74,6 +77,9 @@ public class UserSessionVars {
 	public static LeagueInfoManager getLeagueManager() {
 		LeagueInfoManager mgr = (LeagueInfoManager) UI.getCurrent().getSession()
 				.getAttribute(LEAGUE_MGR);
+		if(mgr == null){
+			setLeagueManager(mgr = new LeagueInfoManager());
+		}
 		return mgr;
 	}
 
@@ -87,9 +93,31 @@ public class UserSessionVars {
 		}
 	}
 	
+	public static AccountInfoManager getAccountInfoManager() {
+		AccountInfoManager mgr = (AccountInfoManager) UI.getCurrent().getSession()
+				.getAttribute(ACCOUNT_MGR);
+		if(mgr == null){
+			setAccountInfoManager(mgr = new AccountInfoManager());
+		}
+		return mgr;
+	}
+	
+	public static void setAccountInfoManager(AccountInfoManager mgr) {
+		if (mgr == null) {
+			removeAttribute(
+					ACCOUNT_MGR);
+		} else {
+			UI.getCurrent().getSession().setAttribute(
+					ACCOUNT_MGR, mgr);
+		}
+	}
+	
 	public static PlayerService getPlayerService() {
 		PlayerService service = (PlayerService) UI.getCurrent().getSession()
 				.getAttribute(PLAYER_SERVICE);
+		if(service == null){
+			setPlayerService(service = SbfServiceFactory.createPlayerService());
+		}
 		return service;
 	}
 
@@ -106,6 +134,9 @@ public class UserSessionVars {
 	public static SbfDraftService getDraftService() {
 		SbfDraftService service = (SbfDraftService) UI.getCurrent().getSession()
 				.getAttribute(DRAFT_SERVICE);
+		if(service == null){
+			setDraftService(service = SbfServiceFactory.createDraftService());
+		}
 		return service;
 	}
 
@@ -145,8 +176,12 @@ public class UserSessionVars {
 	public static SbfLeagueService getLeagueService() {
 		SbfLeagueService service = (SbfLeagueService) UI.getCurrent().getSession()
 				.getAttribute(LEAGUE_SERVICE);
+		if(service == null){
+			setLeagueService(service = SbfServiceFactory.createLeagueService());
+		}
 		return service;
 	}
+	
 
 	public static void setLeagueService(SbfLeagueService s) {
 		if (s == null) {

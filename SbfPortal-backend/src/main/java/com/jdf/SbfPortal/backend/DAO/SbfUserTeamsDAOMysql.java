@@ -81,13 +81,14 @@ public class SbfUserTeamsDAOMysql implements SbfUserTeamsDAO{
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_user_teams "
-					+ "(USER_ID, TEAM_ID, LEAGUE_ID) "
-					+ "values (?,?,?)";
+					+ "(USER_ID, TEAM_ID, LEAGUE_ID, DEFAULT_RANK_SET_ID) "
+					+ "values (?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, t.getUserId());
 			prepStmt.setInt(2, t.getTeamId());
 			prepStmt.setInt(3, t.getLeagueId());
+			prepStmt.setInt(4, t.getDefaultRankSetId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
