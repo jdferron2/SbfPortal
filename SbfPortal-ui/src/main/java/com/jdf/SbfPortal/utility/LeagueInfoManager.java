@@ -247,4 +247,80 @@ public class LeagueInfoManager {
 		}
 		UserSessionVars.resetRankSetToDefault();
 	}
+	
+	public boolean createLeague(String leagueName, Integer numTeams, Integer leagueManager){
+		SbfLeague l = new SbfLeague();
+		l.setLeagueManager(leagueManager);
+		l.setLeagueName(leagueName);
+		l.setNumTeams(numTeams);
+		UserSessionVars.getLeagueService().insertSbfLeague(l);
+		
+		int leagueId = l.getLeagueId();
+		SbfTeam t = new SbfTeam();
+		t.setDraftSlot(1);
+		t.setLeagueId(leagueId);
+		t.setOwnerName(UserSessionVars.getCurrentUser().getUserName());
+		t.setTeamName("new team 1");
+		UserSessionVars.getLeagueService().insertSbfTeam(t);
+		
+		for (int i = 2; i<=numTeams; i++){
+			SbfTeam t2 = new SbfTeam();
+			t2.setLeagueId(leagueId);
+			t2.setOwnerName("new owner " + i);
+			t2.setTeamName("new team " + i);
+			t2.setDraftSlot(i);
+			UserSessionVars.getLeagueService().insertSbfTeam(t2);
+		}
+		
+		SbfUserTeam ut = new SbfUserTeam();
+		ut.setDefaultRankSetId(UserSessionVars.getRankSet().getRankSetId());
+		ut.setLeagueId(l.getLeagueId());
+		ut.setTeamId(t.getTeamId());
+		ut.setUserId(UserSessionVars.getCurrentUser().getUserId());
+		UserSessionVars.getLeagueService().insertSbfUserTeam(ut);
+		
+		return true;
+	}
+	
+	public SbfLeague copyLeague(SbfLeague o, String newLeagueName){
+		SbfLeague l = new SbfLeague(-1, newLeagueName, o.getNumTeams(), o.getLeagueManager());
+		UserSessionVars.getLeagueService().insertSbfLeague(l);
+		List<SbfUserTeam> userTeams = UserSessionVars.getLeagueService().getSbfUserTeamForLeague(o);
+		for (SbfTeam t : UserSessionVars.getLeagueService().getAllSbfTeamsForLeague(o.getLeagueId())){
+			SbfTeam newTeam = new SbfTeam();
+			newTeam.setDraftSlot(t.getDraftSlot());
+			newTeam.setLeagueId(l.getLeagueId());
+			newTeam.setOwnerName(t.getOwnerName());
+			newTeam.setTeamName(t.getTeamName());
+			newTeam.setUserId(t.getUserId());
+			UserSessionVars.getLeagueService().insertSbfTeam(newTeam);
+			for(SbfUserTeam ut : userTeams){
+				if(ut.getTeamId()==t.getTeamId()){
+					SbfUserTeam newUt = new SbfUserTeam();
+					newUt.setDefaultRankSetId(ut.getDefaultRankSetId());
+					newUt.setLeagueId(l.getLeagueId());
+					newUt.setTeamId(newTeam.getTeamId());
+					newUt.setUserId(ut.getUserId());
+					UserSessionVars.getLeagueService().insertSbfUserTeam(newUt);
+				}
+			}
+		}
+		
+		
+		return l;
+	}
+	
+	public boolean deleteLeague(SbfLeague l){
+		UserSessionVars.getLeagueService().deleteSbfLeague(l);
+		for (SbfTeam t : UserSessionVars.getLeagueService().getAllSbfTeamsForLeague(l.getLeagueId())){
+			
+			UserSessionVars.getLeagueService().deleteSbfTeam(t);
+		}
+		for (SbfUserTeam t : UserSessionVars.getLeagueService().getSbfUserTeamForLeague(l)){
+			
+			UserSessionVars.getLeagueService().deleteSbfUserTeam(t);
+		}
+		
+		return true;
+	}
 }

@@ -14,6 +14,7 @@ import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.Players;
 import com.jdf.SbfPortal.backend.data.SbfRank;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
+import com.jdf.SbfPortal.backend.data.SbfUserTeam;
 import com.jdf.SbfPortal.backend.utility.RestAPIUtils;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.navigator.View;
@@ -79,8 +80,10 @@ public class AdminView extends VerticalLayout implements View  {
 	}
 
 	private void buildView(){
-		team1PickSelector = createTradeBox(userId);
-		team2PickSelector = createTradeBox(userId);
+		SbfUserTeam currentUT = UserSessionVars.getLeagueService().getSbfUserTeamForLeagueAndUser(
+				UserSessionVars.getCurrentUser(),UserSessionVars.getCurrentLeague());
+		team1PickSelector = createTradeBox(currentUT.getTeamId());
+		team2PickSelector = createTradeBox(currentUT.getTeamId());
 		team1Selector =  this.createTeamSelectorCB("Team 1", team1PickSelector);
 		team2Selector =  this.createTeamSelectorCB("Team 2", team2PickSelector);
 		CheckBox enableIcing = new CheckBox("Icing Enabled");

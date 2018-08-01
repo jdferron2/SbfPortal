@@ -2,6 +2,7 @@ package com.jdf.SbfPortal.backend;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.jdf.SbfPortal.backend.DAO.SbfKeeperDAO;
 import com.jdf.SbfPortal.backend.DAO.SbfLeagueDAO;
@@ -45,6 +46,16 @@ public class SbfLeagueService {
 		return sbfLeagues;
 	}
 	
+	public synchronized List<SbfLeague> getAllSbfLeaguesManagedByUser(int userId){
+		List<SbfLeague> leagues = new ArrayList<SbfLeague>();
+		for (SbfLeague l : getAllSbfLeagues()){
+			if (l.getLeagueManager() == userId){
+				leagues.add(l);
+			}
+		}
+		return leagues;
+	}
+	
 	public synchronized List<SbfTeam> getAllSbfTeams(){
 		if (sbfTeams == null) {
 			sbfTeams = sbfTeamDao.getAllTeams();
@@ -79,6 +90,11 @@ public class SbfLeagueService {
 	public synchronized SbfUser getSbfUserByName(String name){
 		return getAllSbfUsers().stream().filter(
 				u->u.getUserName().toUpperCase().equals(name.toUpperCase())).findFirst().orElse(null);
+	}
+	
+	public synchronized SbfUser getSbfUserById(int id){
+		return getAllSbfUsers().stream().filter(
+				u->u.getUserId().equals(id)).findFirst().orElse(null);
 	}
 	
 	public synchronized SbfLeague getLeagueById(int id) {
@@ -127,6 +143,10 @@ public class SbfLeagueService {
 	public synchronized void updateSbfTeam(SbfTeam t){
 		sbfTeamDao.updateTeam(t);
 	}
+	public synchronized void deleteSbfTeam(SbfTeam t){
+		sbfTeamDao.deleteTeam(t);
+		this.getAllSbfTeams().remove(t);
+	}
 	
 	public synchronized void updateSbfUserTeam(SbfUserTeam t){
 		sbfUserTeamsDao.updateSbfUserTeam(t);
@@ -135,6 +155,11 @@ public class SbfLeagueService {
 	public synchronized void insertSbfUserTeam(SbfUserTeam t){
 		sbfUserTeamsDao.insertSbfUserTeam(t);
 		getAllSbfUserTeams().add(t);
+	}
+	
+	public synchronized void deleteSbfUserTeam(SbfUserTeam t){
+		sbfUserTeamsDao.deleteSbfUserTeam(t);
+		this.getAllSbfUserTeams().remove(t);
 	}
 	
 	public synchronized void insertSbfTeam(SbfTeam t){
@@ -151,6 +176,16 @@ public class SbfLeagueService {
 		sbfLeagueDao.insertSbfLeague(l);
 		getAllSbfLeagues().add(l);
 	}
+	
+	public synchronized void updateSbfLeague(SbfLeague l){
+		sbfLeagueDao.updateSbfLeague(l);
+		getAllSbfLeagues().add(l);
+	}
+	
+	public synchronized void deleteSbfLeague(SbfLeague l){
+		sbfLeagueDao.deleteSbfLeague(l);
+		getAllSbfLeagues().remove(l);
+	}
 //	public synchronized List<SbfTeam> getAllSbfTeamsForUser(SbfUser u){
 //		List<SbfTeam> teams = new ArrayList<SbfTeam>();
 //		for (SbfTeam t : getAllSbfTeams()){
@@ -163,9 +198,13 @@ public class SbfLeagueService {
 	
 	public synchronized List<SbfLeague> getLeaguesForUser(SbfUser u){
 		List<SbfLeague> leagues = new ArrayList<SbfLeague>();
+		SbfLeague l;
 		for(SbfUserTeam t : getAllSbfUserTeams()){
 			if(t.getUserId() == u.getUserId()){
-				leagues.add(this.getLeagueById(t.getLeagueId()));
+				l = getLeagueById(t.getLeagueId());
+				if (!leagues.contains(l)){
+					leagues.add(l);
+				}
 			}
 		}
 		return leagues;
@@ -200,5 +239,15 @@ public class SbfLeagueService {
 //		return null;
 		return this.getAllSbfUserTeams().stream().filter(
 				ut->ut.getUserId()==u.getUserId() && ut.getLeagueId() == l.getLeagueId()).findFirst().orElse(null);
+	}
+	
+	public synchronized List<SbfUserTeam> getSbfUserTeamForLeague(SbfLeague l){
+		List<SbfUserTeam> userTeams = new ArrayList<SbfUserTeam>();
+		for (SbfUserTeam ut : getAllSbfUserTeams()){
+			if (ut.getLeagueId() == l.getLeagueId()){
+				userTeams.add(ut);
+			}
+		}
+		return userTeams;
 	}
 }

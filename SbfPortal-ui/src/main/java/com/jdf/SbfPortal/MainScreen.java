@@ -7,6 +7,7 @@ import com.jdf.SbfPortal.views.CheatSheetView;
 import com.jdf.SbfPortal.views.CreateLeagueView;
 import com.jdf.SbfPortal.views.DraftDayView;
 import com.jdf.SbfPortal.views.EditCheatsheetSettingsView;
+import com.jdf.SbfPortal.views.EditLeaguesView;
 import com.jdf.SbfPortal.views.EditTeamsView;
 import com.jdf.SbfPortal.views.HomeView;
 import com.jdf.SbfPortal.views.KeepersView;
@@ -54,7 +55,11 @@ public class MainScreen extends HorizontalLayout {
 				menu.addView(new AdminView(), AdminView.NAME, AdminView.NAME, null);
 				menu.addView(new CreateLeagueView(), CreateLeagueView.NAME, CreateLeagueView.NAME, null);
 			}
+			menu.addView(new EditLeaguesView(), EditLeaguesView.NAME, "Edit Leagues", null);
 		}
+		
+		
+		
 		
 
 		navigator.addViewChangeListener(viewChangeListener);

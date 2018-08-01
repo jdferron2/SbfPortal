@@ -111,7 +111,7 @@ public class CreateLeagueView extends CssLayout implements View  {
 		if(!errorFound){
 			//send email veriy
 			//redirect to success page
-			UserSessionVars.getAccountInfoManager().createLeague(
+			UserSessionVars.getLeagueManager().createLeague(
 					leagueName.getValue(), numTeams.getValue(), UserSessionVars.getCurrentUser().getUserId());
 		}
 	}

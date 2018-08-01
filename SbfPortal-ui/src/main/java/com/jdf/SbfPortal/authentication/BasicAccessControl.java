@@ -42,7 +42,7 @@ public class BasicAccessControl implements AccessControl {
 		leagues = leagueService.getLeaguesForUser(u);
 		SbfLeague curLeague = null;
 		if(!leagues.isEmpty()){
-			curLeague = leagues.get(0);
+			curLeague = leagues.get(leagues.size()-1);
 		}
 		UserSessionVars.setCurrentLeague(curLeague);
 		UserSessionVars.setCurrentUser(u);
