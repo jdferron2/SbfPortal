@@ -17,6 +17,7 @@ import com.jdf.SbfPortal.backend.data.SbfTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
+import com.vaadin.server.ExternalResource;
 import com.vaadin.server.FileResource;
 import com.vaadin.server.Resource;
 import com.vaadin.server.ThemeResource;
@@ -260,10 +261,16 @@ public class DraftDisplayPopupUI extends UI {
                 .getBaseDirectory().getAbsolutePath();
 		File soundFile = new File(
 				basepath + "/WEB-INF/music/" + teamName + ".mp3");
-		if (soundFile.exists()){
-			FileResource resource = new FileResource(soundFile);
+		if (soundFile.exists() || (team.getThemeSongUrl() != null && !team.getThemeSongUrl().equals("")) ){
+			//FileResource resource = new FileResource(soundFile);
+			if (team.getThemeSongUrl() != null && !team.getThemeSongUrl().equals("")){
+				TEAMTHEMESONG.setSource(new ExternalResource(team.getThemeSongUrl()));
+			}else{
+				TEAMTHEMESONG.setSource(new FileResource(soundFile));
+			}
+			
 			mainContent.removeComponent(TEAMTHEMESONG);
-			TEAMTHEMESONG = new Audio(null, resource);
+			//TEAMTHEMESONG = new Audio(null, resource);
 			mainContent.addComponent(TEAMTHEMESONG);
 			TEAMTHEMESONG.setShowControls(false); TEAMTHEMESONG.setSizeUndefined();
 			mainContent.setExpandRatio(TEAMTHEMESONG, 0);

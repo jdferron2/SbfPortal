@@ -43,7 +43,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "TEAM_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME, LEAGUE_ID, USER_ID "
+					+ "TEAM_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME, LEAGUE_ID, USER_ID, THEME_SONG_URL "
 					+ "from SBF_TEAMS ";
 
 			rs = stmt.executeQuery(sql);
@@ -53,7 +53,8 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 						rs.getInt("DRAFT_SLOT"),
 						rs.getInt("TEAM_ID"),
 						rs.getString("TEAM_NAME"),
-						rs.getInt("USER_ID")
+						rs.getInt("USER_ID"),
+						rs.getString("THEME_SONG_URL")
 						);
 				sbfTeams.add(team);    				
 			}
@@ -81,8 +82,8 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			conn = ds.getConnection();
 
 			String sql = "insert into sbf_teams "
-					+ "(league_id, owner_name, draft_slot, team_name, user_id) "
-					+ "values (?,?,?,?,?)";
+					+ "(league_id, owner_name, draft_slot, team_name, user_id, theme_song_url) "
+					+ "values (?,?,?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, r.getLeagueId());
@@ -90,6 +91,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			prepStmt.setInt(3, r.getDraftSlot());	
 			prepStmt.setString(4, r.getTeamName());	
 			prepStmt.setInt(5, r.getUserId());
+			prepStmt.setString(6, r.getThemeSongUrl());
 			prepStmt.execute();
 			ResultSet rs = prepStmt.getGeneratedKeys();
 			rs.next();
@@ -122,15 +124,17 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 					+ "OWNER_NAME=?, "
 					+ "TEAM_NAME=?, "
 					+ "DRAFT_SLOT=?, "
-					+ "USER_ID=? "
+					+ "USER_ID=?,"
+					+ "THEME_SONG_URL=? "
 					+ "where league_id = ? and team_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setString(1, r.getOwnerName());
 			prepStmt.setString(2, r.getTeamName());
 			prepStmt.setInt(3, r.getDraftSlot());
 			prepStmt.setInt(4, r.getUserId());
-			prepStmt.setInt(5, r.getLeagueId());
-			prepStmt.setInt(6, r.getTeamId());
+			prepStmt.setString(5, r.getThemeSongUrl());
+			prepStmt.setInt(6, r.getLeagueId());
+			prepStmt.setInt(7, r.getTeamId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);

@@ -3,19 +3,31 @@ package com.jdf.SbfPortal.views;
 import java.util.List;
 
 import com.jdf.SbfPortal.authentication.UserSessionVars;
+import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
+import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.SbfLeague;
+import com.jdf.SbfPortal.backend.data.SbfPickTrade;
+import com.jdf.SbfPortal.backend.data.SbfTeam;
+import com.jdf.SbfPortal.backend.data.SbfUserTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.shared.ui.grid.HeightMode;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.themes.ValoTheme;
 
@@ -24,20 +36,34 @@ public class EditLeaguesView extends VerticalLayout implements View {
 	public static final String NAME = "Edit Leagues";
 
 	private SbfLeagueService leagueService;
+	SbfUserTeam currentUT;
 
+	private SbfDraftService draftService;
 	private ListDataProvider<SbfLeague> leaguesDataProvider;
+	private ListDataProvider<SbfPickTrade> tradesDataProvider;
 
 	private boolean viewBuilt = false;
 
 
 	private Grid<SbfLeague> leaguesGrid;
+	private Grid<SbfPickTrade> tradesGrid;
 
 	List<SbfLeague> leagueList;
+	List<SbfPickTrade> tradesList;
 
+	private ComboBox<Integer> team1PickSelector;
+	private ComboBox<Integer> team2PickSelector;
+	private ComboBox<SbfTeam> team1Selector;
+	private ComboBox<SbfTeam> team2Selector;
+	private Button processTrade = new Button("Process Trade");
+	private GridLayout tradeLayout = new GridLayout(3,3);
+	
 	@Override
 	public void enter(ViewChangeEvent event) {
 		leagueService = UserSessionVars.getLeagueService();
-
+		draftService = UserSessionVars.getDraftService();
+		currentUT = UserSessionVars.getLeagueService().getSbfUserTeamForLeagueAndUser(
+				UserSessionVars.getCurrentUser(),UserSessionVars.getCurrentLeague());
 		if (!viewBuilt) {
 			buildView();
 			viewBuilt=true;
@@ -47,17 +73,50 @@ public class EditLeaguesView extends VerticalLayout implements View {
 
 	void buildView(){
 		leagueList =  leagueService.getAllSbfLeaguesManagedByUser(UserSessionVars.getCurrentUser().getUserId());
-
+		tradesList = draftService.getAllSbfPickTrades(UserSessionVars.getCurrentLeague().getLeagueId());
 		leaguesGrid = configureLeagueGrid(leagueList);
+		tradesGrid = configureTradesGrid(tradesList);
 
+		team1PickSelector = createTradeBox(currentUT.getTeamId());
+		team2PickSelector = createTradeBox(currentUT.getTeamId());
+		team1Selector =  this.createTeamSelectorCB("Team 1", team1PickSelector);
+		team2Selector =  this.createTeamSelectorCB("Team 2", team2PickSelector);
+		
+		processTrade.addClickListener(new ClickListener() {
+			private static final long serialVersionUID = 1L;
+			public void buttonClick(ClickEvent event) {
+				if(team2PickSelector.getValue()!= null ){
+					UserSessionVars.getLeagueManager().addTradeRecord(team1Selector.getValue(), team2Selector.getValue(), UserSessionVars.getCurrentLeague().getLeagueId(), team2PickSelector.getValue());
+				}
+				if(team1PickSelector.getValue()!= null ){
+					UserSessionVars.getLeagueManager().addTradeRecord(team2Selector.getValue(), team1Selector.getValue(), UserSessionVars.getCurrentLeague().getLeagueId(), team1PickSelector.getValue());
+				}
+				team1PickSelector.clear();
+				team2PickSelector.clear();
+				team1Selector.clear();
+				team2Selector.clear();
+				tradesDataProvider.refreshAll();
+				Notification.show("Trade Processed successfully!");
+			}
+
+		});
+		processTrade.setVisible(false);
+		tradeLayout.addComponent(team1Selector,0,0);
+		tradeLayout.addComponent(team2Selector,1,0);
+		tradeLayout.addComponent(processTrade, 1,2);
+		team1PickSelector.setVisible(false);
+		team2PickSelector.setVisible(false);
+		tradeLayout.addComponent(team1PickSelector,0,1);
+		tradeLayout.addComponent(team2PickSelector,1,1);
+		
 		final VerticalLayout layout = new VerticalLayout();
 		layout.setMargin(false);
-		layout.setSizeFull();
-		layout.setSpacing(false);
-		layout.addComponents(leaguesGrid);
-		setSizeFull();
+		//layout.setSizeFull();
+		layout.setSpacing(true);
+		layout.addComponents(leaguesGrid,new Label("Add Trade"), tradeLayout, tradesGrid);
+		//setSizeFull();
 		addComponents(layout);
-		setExpandRatio(layout, 1);
+		setWidth("100%");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -66,9 +125,10 @@ public class EditLeaguesView extends VerticalLayout implements View {
 		leaguesGrid.setCaption("Leagues");
 		leaguesGrid.setItems(leagues);
 
-		leaguesGrid.setSizeFull();
+		leaguesGrid.setWidth("75%");
 		leaguesGrid.setSelectionMode(SelectionMode.SINGLE);
-		leaguesGrid.addColumn(SbfLeague::getLeagueName).setCaption("League Name").setId("leagueNameCol");
+		leaguesGrid.setHeightMode(HeightMode.UNDEFINED);
+		leaguesGrid.addColumn(SbfLeague::getLeagueName).setCaption("League Name").setId("leagueNameCol");		
 		leaguesGrid.addColumn(SbfLeague::getNumTeams).setCaption("Number of Teams").setId("numTeamsCol");
 		leaguesGrid.addColumn(s->"Edit League", editButtonRenderer()).setId("editLeagueCol");
 		leaguesGrid.addColumn(s->"Copy League", copyButtonRenderer()).setId("copyLeagueCol");
@@ -83,6 +143,36 @@ public class EditLeaguesView extends VerticalLayout implements View {
 		return leaguesGrid;
 
 	}
+	
+	@SuppressWarnings("unchecked")
+	public Grid<SbfPickTrade> configureTradesGrid(List<SbfPickTrade> trades){
+		tradesGrid = new Grid<>();
+		tradesGrid.setCaption("Trades for " + UserSessionVars.getCurrentLeague().getLeagueName());
+		tradesGrid.setItems(trades);
+
+		tradesGrid.setWidth("75%");
+		tradesGrid.setHeightMode(HeightMode.UNDEFINED);
+		tradesGrid.setSelectionMode(SelectionMode.SINGLE);
+		tradesGrid.addColumn(t->t.getPick() + ", Round " + LeagueInfoManager.getRound(t.getPick()) + " Pick " + LeagueInfoManager.getPickInRound(t.getPick())
+		).setCaption("Pick");
+			
+		tradesGrid.addColumn(t->leagueService.getSbfTeamByTeamId(t.getFromTeamId(),t.getLeagueId()
+				).getTeamName()).setCaption("From").setId("fromTeamCol");
+		tradesGrid.addColumn(t->leagueService.getSbfTeamByTeamId(t.getToTeamId(),t.getLeagueId()
+				).getTeamName()).setCaption("To").setId("toTeamCol");
+		tradesGrid.addColumn(s->"Delete Trade", deleteTradeRenderer()).setId("deleteTradeCol");
+		
+		tradesDataProvider = (ListDataProvider<SbfPickTrade>) tradesGrid.getDataProvider();
+
+		//leaguesDataProvider.setFilter(l->l, l -> leaguesGridFilter(l));
+		//HeaderRow filterRow = teamsGrid.appendHeaderRow();
+
+		//leaguesGrid.sort("leagueNameCol");
+
+		return tradesGrid;
+
+	}
+
 
 	@SuppressWarnings({ "rawtypes" })
 	private ButtonRenderer editButtonRenderer (){
@@ -102,6 +192,16 @@ public class EditLeaguesView extends VerticalLayout implements View {
 			UI.getCurrent().addWindow(getDeleteLeagueConfirm(l));
 		});
 		return deleteButtonRenderer;
+	}
+	
+	@SuppressWarnings({ "rawtypes" })
+	private ButtonRenderer deleteTradeRenderer (){
+		ButtonRenderer<Object> deleteTradeRenderer = new ButtonRenderer<Object>();
+		deleteTradeRenderer.addClickListener(clickEvent -> {
+			SbfPickTrade t = (SbfPickTrade)clickEvent.getItem();
+			UI.getCurrent().addWindow(getDeleteTradeConfirm(t));
+		});
+		return deleteTradeRenderer;
 	}
 
 	private boolean leaguesGridFilter(SbfLeague l){
@@ -219,7 +319,7 @@ public class EditLeaguesView extends VerticalLayout implements View {
 		} });
 		
 		Button noButton = new Button("NO!!!");
-		yesButton.addClickListener(new Button.ClickListener()
+		noButton.addClickListener(new Button.ClickListener()
 		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
 		{
 			subWindow.close();
@@ -233,6 +333,83 @@ public class EditLeaguesView extends VerticalLayout implements View {
 		//	subWindow.setClosable(false);
 		return subWindow;
 
+	}
+	
+	private Window getDeleteTradeConfirm(SbfPickTrade t){
+		Window subWindow = new Window("Delete trade?");
+		VerticalLayout subContent = new VerticalLayout();
+
+		subContent.setMargin(true);
+
+		Button yesButton = new Button("Yes, Delete");
+		yesButton.addClickListener(new Button.ClickListener()
+		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+		{
+			UserSessionVars.getDraftService().deleteSbfPickTrade(t);
+			tradesList.remove(t);
+			tradesDataProvider.refreshAll();
+			subWindow.close();
+
+		} });
+		
+		Button noButton = new Button("NO!!!");
+		noButton.addClickListener(new Button.ClickListener()
+		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+		{
+			subWindow.close();
+
+		} });
+
+		subContent.addComponents(yesButton, noButton);
+		subWindow.setContent(subContent);
+		subWindow.center();
+
+		//	subWindow.setClosable(false);
+		return subWindow;
+
+	}
+	
+	public ComboBox<Integer> createTradeBox(int teamId){
+		ComboBox<Integer> teamPicksCB = new ComboBox<Integer>("Picks");
+		teamPicksCB.setItemCaptionGenerator(
+				i->"Pick: " + Integer.toString(i) + " (r" + 
+						Integer.toString(LeagueInfoManager.getRound(i))+
+						" p" + LeagueInfoManager.getPickInRound(i) + ")");
+		teamPicksCB.setItems(UserSessionVars.getLeagueManager().getPicksForTeam(teamId));
+		teamPicksCB.addValueChangeListener(event-> {
+			setSubmitVisible();
+		});
+		return teamPicksCB;
+	}
+
+	public ComboBox<SbfTeam> createTeamSelectorCB(String name, ComboBox<Integer> connectedBox){
+		ComboBox<SbfTeam> teamCB = new ComboBox<SbfTeam>(name);
+		teamCB.setItems(leagueService.getAllSbfTeamsForLeague(UserSessionVars.getCurrentLeague().getLeagueId()));
+		teamCB.setItemCaptionGenerator(SbfTeam::getOwnerName);
+		teamCB.addValueChangeListener(event-> {
+			if(event.getValue()!= null){
+				connectedBox.clear();
+				connectedBox.setItems(UserSessionVars.getLeagueManager().getPicksForTeam(event.getValue().getTeamId()));
+				connectedBox.setVisible(true);
+				setSubmitVisible();
+			}else{
+				connectedBox.clear();
+				connectedBox.setVisible(false);
+				setSubmitVisible();
+			}
+		});
+
+		return teamCB;
+	}
+
+	public void setSubmitVisible(){
+		if ((team1PickSelector.getValue() != null || team2PickSelector.getValue() != null) &&
+				(team1Selector.getValue() !=null && team2Selector.getValue() !=null) &&
+				team1Selector.getValue() != team2Selector.getValue()){
+			processTrade.setVisible(true);
+		}else{
+			processTrade.setVisible(false);
+		}
 	}
 
 }

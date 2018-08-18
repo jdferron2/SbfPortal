@@ -73,7 +73,7 @@ public class LeagueInfoManager {
 		return getRound(getCurrentPick());
 	}
 
-	public synchronized int getRound(int pick){
+	public static synchronized int getRound(int pick){
 		int round = 1;
 		if (pick%NUMBER_OF_TEAMS ==0){
 			round = pick/NUMBER_OF_TEAMS;
@@ -87,7 +87,7 @@ public class LeagueInfoManager {
 		return getPickInRound(getCurrentPick());
 	}
 
-	public synchronized int getPickInRound(int pick){
+	public static synchronized int getPickInRound(int pick){
 		if (pick <= NUMBER_OF_TEAMS) return pick;
 		if (pick % NUMBER_OF_TEAMS == 0) return NUMBER_OF_TEAMS;
 		return (pick % NUMBER_OF_TEAMS) ;
@@ -293,6 +293,7 @@ public class LeagueInfoManager {
 			newTeam.setOwnerName(t.getOwnerName());
 			newTeam.setTeamName(t.getTeamName());
 			newTeam.setUserId(t.getUserId());
+			newTeam.setThemeSongUrl(t.getThemeSongUrl());
 			UserSessionVars.getLeagueService().insertSbfTeam(newTeam);
 			for(SbfUserTeam ut : userTeams){
 				if(ut.getTeamId()==t.getTeamId()){
