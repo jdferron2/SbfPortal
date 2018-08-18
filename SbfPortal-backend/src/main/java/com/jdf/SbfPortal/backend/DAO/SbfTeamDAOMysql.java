@@ -136,8 +136,9 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			prepStmt.setString(2, r.getTeamName());
 			prepStmt.setInt(3, r.getDraftSlot());
 			prepStmt.setInt(4, r.getUserId());
-			prepStmt.setInt(5, r.getLeagueId());
-			prepStmt.setInt(6, r.getTeamId());
+			prepStmt.setString(5, r.getThemeSongUrl());
+			prepStmt.setInt(6, r.getLeagueId());
+			prepStmt.setInt(7, r.getTeamId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
