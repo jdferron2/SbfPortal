@@ -11,15 +11,17 @@ public class SbfTeam {
 	private int leagueId;
 	private String teamName;
 	private int userId;
+	private String themeSongUrl;
 	
 	public SbfTeam() {}
-	public SbfTeam(int leagueId, String owner, int draftPosition, int id, String teamName, int userId){
-		this.leagueId = leagueId;
-		this.ownerName = owner;
-		this.draftSlot = draftPosition;
-		this.teamId = id;
-		this.teamName = teamName;
-		this.setUserId(userId);
+	public SbfTeam(int leagueId, String owner, int draftPosition, int id, String teamName, int userId, String themeSongUrl){
+		setLeagueId(leagueId);
+		setOwnerName(owner);
+		setDraftSlot(draftPosition);
+		setTeamId(id);
+		setTeamName(teamName);
+		setUserId(userId);
+		setThemeSongUrl(themeSongUrl);
 	}
 	
 	public String getOwnerName() {
@@ -59,6 +61,12 @@ public class SbfTeam {
 	}
 	public void setUserId(int userId) {
 		this.userId = userId;
+	}
+	public String getThemeSongUrl() {
+		return themeSongUrl;
+	}
+	public void setThemeSongUrl(String themeSongUrl) {
+		this.themeSongUrl = themeSongUrl;
 	}
 
 }

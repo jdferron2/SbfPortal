@@ -3,6 +3,8 @@ package com.jdf.SbfPortal.authentication;
 import java.io.Serializable;
 
 import com.vaadin.event.ShortcutAction;
+import com.vaadin.navigator.View;
+import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.Page;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -12,23 +14,23 @@ import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.PasswordField;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 
 /**
  * UI content when the user is not logged in yet.
  */
-public class LoginScreen extends CssLayout {
+public class LoginScreen extends CssLayout implements View {
 
+	public static final String NAME = "Login";
 	private TextField username;
 	private PasswordField password;
 	private Button login;
 	private Button forgotPassword;
-	private LoginListener loginListener;
 	private AccessControl accessControl;
 
-	public LoginScreen(AccessControl accessControl, LoginListener loginListener) {
-		this.loginListener = loginListener;
+	public LoginScreen(AccessControl accessControl) {
 		this.accessControl = accessControl;
 		buildUI();
 		username.focus();
@@ -101,14 +103,9 @@ public class LoginScreen extends CssLayout {
 
 
 	private void login() {
-		//    	if (leagueComboBox.getValue() == null && !leagueComboBox.getValue().equals("")){
-		//    		showNotification(new Notification("Login failed",
-		//                    "Select a league, jackass.",
-		//                    Notification.Type.HUMANIZED_MESSAGE));
-		//    		leagueComboBox.focus();
-		//    	}
 		if (accessControl.signIn(username.getValue(), password.getValue())) {
-			loginListener.loginSuccessful();
+			UI.getCurrent().getNavigator().navigateTo("");
+			Page.getCurrent().reload();
 		} else {
 			showNotification(new Notification("Login failed",
 					"Please check your username and password and try again.",
@@ -126,5 +123,13 @@ public class LoginScreen extends CssLayout {
 
 	public interface LoginListener extends Serializable {
 		void loginSuccessful();
+	}
+
+	@Override
+	public void enter(ViewChangeEvent event) {
+		if (UserSessionVars.getAccessControl().isUserSignedIn()){
+			UI.getCurrent().getNavigator().navigateTo("");
+		}
+		
 	}
 }

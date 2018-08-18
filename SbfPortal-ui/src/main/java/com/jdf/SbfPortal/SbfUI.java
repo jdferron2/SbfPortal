@@ -15,6 +15,7 @@ import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.MessageHandler;
 import com.jdf.SbfPortal.utility.UncaughtExceptionHandler;
 import com.jdf.SbfPortal.views.CheatSheetView;
+import com.jdf.SbfPortal.views.HomeView;
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
@@ -61,17 +62,20 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 		UserSessionVars.setAccessControl(accessControl);
 		handler = new MessageHandler(this.getSession());
 		Responsive.makeResponsive(this);
-		getPage().setTitle("SBF");
-		if (!accessControl.isUserSignedIn()) {
-			setContent(new LoginScreen(accessControl, new LoginListener() {
-				@Override
-				public void loginSuccessful() {
-					showMainView();
-				}
-			}));
-		} else {
-			showMainView();
-		}
+		getPage().setTitle("Awesome Draft");
+		showMainView();
+//		if (!accessControl.isUserSignedIn()) {
+//
+//			setContent(new LoginScreen(accessControl, new LoginListener() {
+//				@Override
+//				public void loginSuccessful() {
+//					leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
+//					showMainView();
+//				}
+//			}));
+//		} else {
+//			showMainView();
+//		}
 	}
 
 	@Override
@@ -104,14 +108,10 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 	}
 
 	protected void showMainView() {
-		leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
 		addStyleName(ValoTheme.UI_WITH_MENU);
 		setContent(new MainScreen(SbfUI.this));
-		if (getNavigator().getState().equals("")){
-			getNavigator().navigateTo(CheatSheetView.NAME);
-		}else{
-			getNavigator().navigateTo(getNavigator().getState());
-		}
+		getNavigator().setErrorView(new HomeView());
+		getNavigator().navigateTo(getNavigator().getState());
 	}
 	
 	private void configureLog4j(){

@@ -196,7 +196,10 @@ public class KeepersView extends VerticalLayout implements View {
 
 	private void draftAllKeepers(){
 		for(SbfKeeper k: leagueService.getAllSbfKeepers(leagueId)){
-			if (draftService.getSbfDraftRecordByPlayerId(k.getPlayerId(), leagueId)!=null) continue;
+			SbfDraftRecord r=draftService.getSbfDraftRecordByPlayerId(k.getPlayerId(), leagueId);
+			if (r !=null) {
+				draftService.deleteSbfDraftRecord(r);
+			}
 			int pick = 0;
 			int draftSlot = leagueService.getSbfTeamByTeamId(k.getTeamId(), leagueId).getDraftSlot();
 			if (k.getRound() == 1){

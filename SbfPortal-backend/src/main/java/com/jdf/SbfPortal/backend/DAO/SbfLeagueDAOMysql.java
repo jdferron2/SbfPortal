@@ -2,6 +2,7 @@ package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -77,18 +78,104 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		return sbfLeagues;
 	}
 
-	public void insertSbfLeague(SbfLeague r) {
-		// TODO Auto-generated method stub
+	public void insertSbfLeague(SbfLeague l) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+
+			String sql = "insert into SBF_LEAGUE "
+					+ "(LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER) "
+					+ "values (?,?,?)";
+			prepStmt = conn.prepareStatement(sql);
+
+			prepStmt.setString(1, l.getLeagueName());
+			prepStmt.setInt(2, l.getNumTeams());	
+			prepStmt.setInt(3, l.getLeagueManager());	
+			prepStmt.execute();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			l.setLeagueId(rs.getInt(1));
+		} catch (Exception ex) {
+			logger.error("Stack Trace: ", ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
 		
 	}
 
-	public void updateSbfLeague(SbfLeague r) {
-		// TODO Auto-generated method stub
+	public void updateSbfLeague(SbfLeague l) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+
+			String sql = "update SBF_LEAGUE set"
+					+ "LEAGUE_NAME=?, "
+					+ "NUM_TEAMS=?, "
+					+ "LEAGUE_MANAGER=? "
+					+ "WHERE league_id = ?";
+			prepStmt = conn.prepareStatement(sql);
+
+			prepStmt.setString(1, l.getLeagueName());
+			prepStmt.setInt(2, l.getNumTeams());	
+			prepStmt.setInt(3, l.getLeagueManager());	
+			prepStmt.setInt(4, l.getLeagueId());
+			prepStmt.execute();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			l.setLeagueId(rs.getInt(1));
+		} catch (Exception ex) {
+			logger.error("Stack Trace: ", ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
+		
 		
 	}
 
 	public void deleteSbfLeague(SbfLeague r) {
-		// TODO Auto-generated method stub
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+
+			String sql = "delete from SBF_LEAGUE where "
+					+ "LEAGUE_ID = ? ";
+			prepStmt = conn.prepareStatement(sql);
+
+			prepStmt.setInt(1,r.getLeagueId());
+			prepStmt.execute();
+		} catch (Exception ex) {
+			logger.error("Stack Trace: ",  ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
 		
-	}	
+	}
+		
 }

@@ -3,9 +3,12 @@ package com.jdf.SbfPortal;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.jdf.SbfPortal.authentication.LoginScreen;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
+import com.jdf.SbfPortal.authentication.LoginScreen.LoginListener;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.SbfLeague;
+import com.jdf.SbfPortal.views.CreateAccountView;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.navigator.View;
@@ -70,28 +73,53 @@ public class Menu extends CssLayout {
 		MenuBar logoutMenu = new MenuBar();
 		MenuItem topLevel = logoutMenu.addItem("Account", null);
 		MenuItem secondLevel;
-		secondLevel = topLevel.addItem("Switch Leagues", VaadinIcons.ADJUST, new Command() {
+		
+		if(UserSessionVars.getAccessControl().isUserSignedIn()){
+			secondLevel = topLevel.addItem("Switch Leagues", VaadinIcons.ADJUST, new Command() {
 
-			@Override
-			public void menuSelected(MenuItem selectedItem) {
-				UI.getCurrent().addWindow(getSwitchLeaguesWindow());
-			}
-		});
+				@Override
+				public void menuSelected(MenuItem selectedItem) {
+					UI.getCurrent().addWindow(getSwitchLeaguesWindow());
+				}
+			});
 
-		secondLevel.setStyleName(ValoTheme.MENU_ITEM);
+			secondLevel.setStyleName(ValoTheme.MENU_ITEM);
 
-		secondLevel = topLevel.addItem("Logout", VaadinIcons.SIGN_OUT, new Command() {
+			secondLevel = topLevel.addItem("Logout", VaadinIcons.SIGN_OUT, new Command() {
 
-			@Override
-			public void menuSelected(MenuItem selectedItem) {
-				VaadinSession.getCurrent().getSession().invalidate();
-				Page.getCurrent().reload();
-			}
-		});
+				@Override
+				public void menuSelected(MenuItem selectedItem) {
+					VaadinSession.getCurrent().getSession().invalidate();
+					Page.getCurrent().reload();
+				}
+			});
 
-		secondLevel.setStyleName(ValoTheme.MENU_ITEM);
+			secondLevel.setStyleName(ValoTheme.MENU_ITEM);
 
-		logoutMenu.addStyleName("user-menu");
+			logoutMenu.addStyleName("user-menu");
+		}
+		else{//user not signed in, add sign in or create account option
+			secondLevel = topLevel.addItem("Sign In", VaadinIcons.SIGN_IN, new Command() {
+
+				@Override
+				public void menuSelected(MenuItem selectedItem) {
+					navigator.navigateTo(LoginScreen.NAME);
+				}
+			});
+
+			secondLevel.setStyleName(ValoTheme.MENU_ITEM);
+			navigator.addView(CreateAccountView.NAME, new CreateAccountView());
+			secondLevel = topLevel.addItem("Create Account", null, new Command() {
+
+				@Override
+				public void menuSelected(MenuItem selectedItem) {
+					navigator.navigateTo(CreateAccountView.NAME);
+				}
+			});
+
+			secondLevel.setStyleName(ValoTheme.MENU_ITEM);
+		}
+		
 
 		menuPart.addComponent(logoutMenu);
 

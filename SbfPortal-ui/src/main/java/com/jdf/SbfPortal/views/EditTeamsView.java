@@ -55,7 +55,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 		teamsGrid = configureTeamGrid(teamList);
 
-		final HorizontalLayout layout = new HorizontalLayout();
+		final VerticalLayout layout = new VerticalLayout();
 		layout.setMargin(false);
 		layout.setSizeFull();
 		layout.setSpacing(false);
@@ -77,12 +77,13 @@ public class EditTeamsView extends VerticalLayout implements View {
 		teamsGrid.addColumn(SbfTeam::getOwnerName).setCaption("Owner").setId("OwnerColumn");
 		teamsGrid.addColumn(SbfTeam::getTeamName).setCaption("Team Name").setId("TeamColumn");
 		teamsGrid.addColumn(SbfTeam::getDraftSlot).setCaption("Draft Slot").setId("DraftslotColumn").setMaximumWidth(80);
+		teamsGrid.addColumn(SbfTeam::getThemeSongUrl).setCaption("Theme Song").setId("ThemeSongColumn");
 		teamsGrid.addColumn(s->"Edit Team", editButtonRenderer()).setId("EditColumn");
 
 		teamsDataProvider = (ListDataProvider<SbfTeam>) teamsGrid.getDataProvider();
 
 		teamsDataProvider.setFilter(t->t, t -> teamsGridFilter(t));
-		HeaderRow filterRow = teamsGrid.appendHeaderRow();
+		//HeaderRow filterRow = teamsGrid.appendHeaderRow();
 
 		teamsGrid.sort("DraftslotColumn");
 
@@ -109,6 +110,8 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 	private Window getEditTeamWindow(SbfTeam t){
 		String teamName = t.getTeamName();
+		String themeSong = t.getThemeSongUrl() == null ? "" : t.getThemeSongUrl();
+		
 		if (teamName == null) teamName = "";
 		Window subWindow = new Window(t.getOwnerName() + " - " + t.getTeamName());
 		VerticalLayout subContent = new VerticalLayout();
@@ -132,7 +135,11 @@ public class EditTeamsView extends VerticalLayout implements View {
 		draftSlotCB.setItems(draftSlots);
 		draftSlotCB.setValue(t.getDraftSlot());
 
-
+		TextField themeSongUrl = new TextField();
+		themeSongUrl.setCaption("Theme Song Url");
+		themeSongUrl.setWidth("100%");
+		themeSongUrl.addStyleName(ValoTheme.TEXTFIELD_LARGE);
+		themeSongUrl.setValue(themeSong);
 
 		Button submitButton = new Button("Submit");
 		submitButton.addClickListener(new Button.ClickListener()
@@ -151,7 +158,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 			if(ownerName.getValue() != null && !ownerName.getValue().equals("")){
 				t.setOwnerName(ownerName.getValue());
 			}
-
+			t.setThemeSongUrl(themeSongUrl.getValue());
 			leagueService.updateSbfTeam(t);
 			if (t2!=null) leagueService.updateSbfTeam(t2);
 			teamsDataProvider.refreshAll();
@@ -159,7 +166,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 		} });
 
-		subContent.addComponents(teamNameTextField, ownerName, draftSlotCB, submitButton);
+		subContent.addComponents(teamNameTextField, ownerName, draftSlotCB, submitButton, themeSongUrl);
 		subWindow.setContent(subContent);
 		subWindow.center();
 

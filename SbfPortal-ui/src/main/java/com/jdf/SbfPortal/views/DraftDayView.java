@@ -22,6 +22,7 @@ import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.BrowserWindowOpener;
+import com.vaadin.server.ExternalResource;
 import com.vaadin.server.Page;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Alignment;
@@ -71,6 +72,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 	BrowserWindowOpener draftBoardDisplayOpener;
 
 	private Audio PICKISINSOUND = new Audio(null, new ThemeResource("audio/pickIsInChime.mp3"));
+	
 	Window resumeWindow = new Window("Resume Draft");
 
 	private final Command filterCommand = new Command() {
@@ -96,6 +98,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 		}
 
 		public void enter(ViewChangeEvent event) {
+			//PICKISINSOUND.setSource(new ExternalResource("http://k003.kiwi6.com/hotlink/q0rm2z6jes/Brandon.mp3"));
 			rankSetId = UserSessionVars.getRankSet().getRankSetId();
 			leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
 			leagueMgr = UserSessionVars.getLeagueManager();
@@ -350,7 +353,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				//availableGrid.getDataProvider().refreshItem(selectedPlayer);
 				playersDataProvider.refreshAll();
 				int randomInt = rand.nextInt(99) + 1;
-				if (randomInt < 8 && icingEnabled) isAWinner=true;
+				if (randomInt < 12 && icingEnabled) isAWinner=true;
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
 						((DraftDisplayPopupUI) t).processPick(isAWinner, false);

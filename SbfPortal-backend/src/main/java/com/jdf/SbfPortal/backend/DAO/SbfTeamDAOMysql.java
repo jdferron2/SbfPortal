@@ -48,7 +48,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "TEAM_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME, LEAGUE_ID, USER_ID "
+					+ "TEAM_ID, OWNER_NAME, DRAFT_SLOT, TEAM_NAME, LEAGUE_ID, USER_ID, THEME_SONG_URL "
 					+ "from SBF_TEAMS ";
 
 			rs = stmt.executeQuery(sql);
@@ -58,7 +58,8 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 						rs.getInt("DRAFT_SLOT"),
 						rs.getInt("TEAM_ID"),
 						rs.getString("TEAM_NAME"),
-						rs.getInt("USER_ID")
+						rs.getInt("USER_ID"),
+						rs.getString("THEME_SONG_URL")
 						);
 				sbfTeams.add(team);    				
 			}
@@ -86,16 +87,20 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "insert into SBF_TEAMS "
-					+ "(league_id, team_id, owner_name, draft_slot, user_id) "
-					+ "values (?,?,?,?, ?)";
+					+ "(league_id, owner_name, draft_slot, team_name, user_id, theme_song_url) "
+					+ "values (?,?,?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, r.getLeagueId());
-			prepStmt.setInt(2, r.getTeamId());
-			prepStmt.setString(3, r.getOwnerName());	
+			prepStmt.setString(2, r.getOwnerName());	
+			prepStmt.setInt(3, r.getDraftSlot());	
 			prepStmt.setString(4, r.getTeamName());	
 			prepStmt.setInt(5, r.getUserId());
+			prepStmt.setString(6, r.getThemeSongUrl());
 			prepStmt.execute();
+			ResultSet rs = prepStmt.getGeneratedKeys();
+			rs.next();
+			r.setTeamId(rs.getInt(1));
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
 		}
