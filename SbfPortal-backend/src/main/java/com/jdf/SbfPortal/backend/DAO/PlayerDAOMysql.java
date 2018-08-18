@@ -20,19 +20,22 @@ import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.utility.PropertyReader;
 
 public class PlayerDAOMysql implements PlayerDAO {
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(PlayerDAOMysql.class);
 	public PlayerDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Error setting up context for database connection: " + e.getMessage());
-			logger.error("Stack Trace: " + e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 	public List<Player> getAllPlayers() {
 		List<Player> players = new ArrayList<Player>();
@@ -40,11 +43,11 @@ public class PlayerDAOMysql implements PlayerDAO {
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 			stmt = conn.createStatement();
 			String sql = "select "
 					+ "player_id, pro_rank, full_name, first_name, last_name, height, jersey_num, position, nfl_team, weight, DOB "
-					+ "from players";
+					+ "from PLAYERS";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
@@ -84,8 +87,8 @@ public class PlayerDAOMysql implements PlayerDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
-			String sql = "insert into players "
+			conn = DriverManager.getConnection(jdbcUrl);
+			String sql = "insert into PLAYERS "
 					+ "(player_id, pro_rank, full_name, first_name, last_name, height, jersey_num, position, nfl_team, weight, DOB) "
 					+ "values (?,?,?,?,?,?,?,?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
@@ -123,10 +126,10 @@ public class PlayerDAOMysql implements PlayerDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 			//stmt = conn.createStatement();
 
-			String sql = "delete from players "
+			String sql = "delete from PLAYERS "
 					+ "where player_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 
@@ -153,9 +156,9 @@ public class PlayerDAOMysql implements PlayerDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "delete from players";
+			String sql = "delete from PLAYERS";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.execute();
 			//players.clear();
@@ -178,9 +181,9 @@ public class PlayerDAOMysql implements PlayerDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "update players "
+			String sql = "update PLAYERS "
 					+ "set "
 					+ "pro_rank=?, "
 					+ "full_name=?, "

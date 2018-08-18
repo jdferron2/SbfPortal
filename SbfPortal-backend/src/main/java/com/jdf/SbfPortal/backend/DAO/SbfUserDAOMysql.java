@@ -1,6 +1,7 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,28 +9,27 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 
 import com.jdf.SbfPortal.backend.data.SbfUser;
 
 public class SbfUserDAOMysql implements SbfUserDAO{
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(SbfUserDAOMysql.class);
 	public SbfUserDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Stack Trace: ", e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = 	System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 
 	@Override
@@ -40,9 +40,10 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
-
+			logger.trace("Getting connection for getAllSbfUsers()");
+			conn = DriverManager.getConnection(jdbcUrl);
 			stmt = conn.createStatement();
+			logger.info("Remote connection successful.");
 			String sql = "select "
 					+ "USER_ID, USER_NAME, EMAIL, PASSWORD, ROLE "
 					+ "from SBF_USERS ";
@@ -78,9 +79,9 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "insert into sbf_users "
+			String sql = "insert into SBF_USERS "
 					+ "(user_name, password, email, role) "
 					+ "values (?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
@@ -114,9 +115,9 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "update sbf_users "
+			String sql = "update SBF_USERS "
 					+ "set "
 					+ "EMAIL=?, "
 					+ "PASSWORD=?, "
@@ -148,9 +149,9 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "delete from sbf_users "
+			String sql = "delete from SBF_USERS "
 					+ "where USER_ID = ? ";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, u.getUserId());

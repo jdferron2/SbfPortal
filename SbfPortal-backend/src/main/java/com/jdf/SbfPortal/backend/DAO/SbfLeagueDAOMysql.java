@@ -21,18 +21,22 @@ import com.jdf.SbfPortal.backend.utility.PropertyReader;
 
 public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(SbfLeagueDAOMysql.class);
 	public SbfLeagueDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Stack Trace: " + e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 	
 	public synchronized List<SbfLeague> getAllSbfLeagues() {
@@ -41,7 +45,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 			stmt = conn.createStatement();
 			String sql = "select "
 					+ "LEAGUE_ID, LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER "
@@ -80,7 +84,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		try {
 			conn = ds.getConnection();
 
-			String sql = "insert into sbf_league "
+			String sql = "insert into SBF_LEAGUE "
 					+ "(LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER) "
 					+ "values (?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
@@ -114,7 +118,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		try {
 			conn = ds.getConnection();
 
-			String sql = "update sbf_league set"
+			String sql = "update SBF_LEAGUE set"
 					+ "LEAGUE_NAME=?, "
 					+ "NUM_TEAMS=?, "
 					+ "LEAGUE_MANAGER=? "
@@ -152,7 +156,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		try {
 			conn = ds.getConnection();
 
-			String sql = "delete from sbf_league where "
+			String sql = "delete from SBF_LEAGUE where "
 					+ "LEAGUE_ID = ? ";
 			prepStmt = conn.prepareStatement(sql);
 

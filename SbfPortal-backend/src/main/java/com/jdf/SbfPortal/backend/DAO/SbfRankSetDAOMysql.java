@@ -1,6 +1,7 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,18 +19,22 @@ import org.apache.log4j.Logger;
 import com.jdf.SbfPortal.backend.data.SbfRankSet;
 
 public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(SbfRankSetDAOMysql.class);
 	public SbfRankSetDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Stack Trace: " + e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 
 	@Override
@@ -40,7 +45,7 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			stmt = conn.createStatement();
 			String sql = "select "
@@ -77,9 +82,9 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "insert into sbf_rank_sets "
+			String sql = "insert into SBF_RANK_SETS "
 					+ "(USER_ID, RANK_SET_NAME) "
 					+ "values (?,?)";
 			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -111,9 +116,9 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "update sbf_rank_sets "
+			String sql = "update SBF_RANK_SETS "
 					+ "set "
 					+ "RANK_SET_NAME=? "
 					+ "where RANK_SET_ID = ?";
@@ -141,9 +146,9 @@ public class SbfRankSetDAOMysql implements SbfRankSetsDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "delete from sbf_rank_sets "
+			String sql = "delete from SBF_RANK_SETS "
 					+ "where rank_set_id = ? ";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, s.getRankSetId());
