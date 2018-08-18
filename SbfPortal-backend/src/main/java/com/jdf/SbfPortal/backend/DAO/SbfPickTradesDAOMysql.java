@@ -146,36 +146,37 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 //		}	
 	}
 
-	public void deleteSbfPickTrade(SbfPickTrade a) {
-		//manual process for now...
-//		PreparedStatement prepStmt=null;
-//		Connection conn = null;
-//		try {
-////			conn = DriverManager.getConnection(jdbcUrl);
-////
-////			String sql = "delete from sbf_pick_trades where "
-////					+ "PICK_NUM = ? and "
-////					+ "LEAGUE_ID = ?";
-////			prepStmt = conn.prepareStatement(sql);
-////
-////			prepStmt.setInt(1,a.getTeamId());
-////			prepStmt.setInt(2,a.getPick());
-////			prepStmt.setInt(3,a.getLeagueId());
-////			prepStmt.execute();
-//		} catch (Exception ex) {
-//			System.out.println(ex.getMessage());
-//			// handle the error
-//		}
-//		finally {
-//			if (conn != null) {
-//				try {
-//					conn.close();
-//				} catch (SQLException sqlEx) { } // ignore
-//
-//				conn = null;
-//			}
-//
-//		}	
+	public void deleteSbfPickTrade(SbfPickTrade t) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+
+			String sql = "delete from sbf_pick_trades where "
+					+ "PICK_NUM = ? and "
+					+ "LEAGUE_ID = ? and "
+					+ "TO_TEAM_ID = ? and "
+					+ "FROM_TEAM_ID = ?";
+			prepStmt = conn.prepareStatement(sql);
+
+			prepStmt.setInt(1,t.getPick());
+			prepStmt.setInt(2,t.getLeagueId());
+			prepStmt.setInt(3,t.getToTeamId());
+			prepStmt.setInt(4,t.getFromTeamId());
+			prepStmt.execute();
+		} catch (Exception ex) {
+			logger.error("Stack Trace: ",  ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
 
 	}
 }
