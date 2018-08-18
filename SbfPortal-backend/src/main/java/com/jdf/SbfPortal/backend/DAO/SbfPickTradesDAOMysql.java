@@ -1,6 +1,7 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,18 +21,22 @@ import com.jdf.SbfPortal.backend.data.SbfPickTrade;
 
 public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(SbfPickTradesDAOMysql.class);
 	public SbfPickTradesDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Stack Trace: " + e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 	public synchronized List<SbfPickTrade> getAllSbfPickTrades(Integer leagueId) {
 		List<SbfPickTrade> sbfPickTrades = new ArrayList<SbfPickTrade>();
@@ -39,7 +44,7 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			stmt = conn.createStatement();
 			String sql = "select "
@@ -78,9 +83,9 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "insert into sbf_pick_trades "
+			String sql = "insert into SBF_PICK_TRADES "
 					+ "(FROM_TEAM_ID, TO_TEAM_ID, LEAGUE_ID, PICK_NUM, PROCESSED_TS) "
 					+ "values (?,?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
@@ -114,7 +119,7 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 //		PreparedStatement prepStmt=null;
 //		Connection conn = null;
 //		try {
-//			conn = ds.getConnection();
+//			conn = DriverManager.getConnection(jdbcUrl);
 //
 //			String sql = "update sbf_pick_trades set "
 //					+ "FROM_TEAM_ID "
@@ -146,7 +151,7 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 //		PreparedStatement prepStmt=null;
 //		Connection conn = null;
 //		try {
-////			conn = ds.getConnection();
+////			conn = DriverManager.getConnection(jdbcUrl);
 ////
 ////			String sql = "delete from sbf_pick_trades where "
 ////					+ "PICK_NUM = ? and "

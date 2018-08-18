@@ -1,6 +1,7 @@
 package com.jdf.SbfPortal.backend.DAO;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,18 +19,22 @@ import org.apache.log4j.Logger;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
 
 public class SbfTeamDAOMysql implements SbfTeamDAO{
-	InitialContext ctx;
-	Context envContext;
-	DataSource ds;
+	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(SbfTeamDAOMysql.class);
 	public SbfTeamDAOMysql(){
 		try {
-			ctx = new InitialContext();
-			envContext  = (Context)ctx.lookup("java:/comp/env");
-			ds = (DataSource) envContext.lookup("jdbc/MyDB");
-		} catch (NamingException e) {
-			logger.error("Stack Trace: ", e);
-		}
+			Class.forName("com.mysql.jdbc.Driver");
+			String dbName = System.getProperty("RDS_DB_NAME");
+			String userName = System.getProperty("RDS_USERNAME");
+			String password = System.getProperty("RDS_PASSWORD");
+			String hostname = System.getProperty("RDS_HOSTNAME");
+			String port = System.getProperty("RDS_PORT");
+			jdbcUrl = "jdbc:mysql://" + hostname + ":" +
+					port + "/" + dbName + "?user=" + userName + "&password=" + password;
+			logger.trace("Building connection string from environment variables.");
+		} catch (ClassNotFoundException e) {
+			logger.error("ClassNotFound in..." , e);
+		} 
 	}
 	
 	public synchronized List<SbfTeam> getAllTeams() {
@@ -39,7 +44,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 		ResultSet rs=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			stmt = conn.createStatement();
 			String sql = "select "
@@ -78,9 +83,9 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "insert into sbf_teams "
+			String sql = "insert into SBF_TEAMS "
 					+ "(league_id, team_id, owner_name, draft_slot, user_id) "
 					+ "values (?,?,?,?, ?)";
 			prepStmt = conn.prepareStatement(sql);
@@ -112,9 +117,9 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "update sbf_teams "
+			String sql = "update SBF_TEAMS "
 					+ "set "
 					+ "OWNER_NAME=?, "
 					+ "TEAM_NAME=?, "
@@ -149,9 +154,9 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "delete from sbf_teams "
+			String sql = "delete from SBF_TEAMS "
 					+ "where team_id = ? ";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, r.getTeamId());
