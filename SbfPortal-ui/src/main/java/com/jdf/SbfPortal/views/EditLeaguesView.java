@@ -151,7 +151,8 @@ public class EditLeaguesView extends VerticalLayout implements View {
 		tradesGrid.setItems(trades);
 
 		tradesGrid.setWidth("75%");
-		tradesGrid.setHeightMode(HeightMode.UNDEFINED);
+		//tradesGrid.setHeightMode(HeightMode.UNDEFINED);
+		//tradesGrid.setHeightByRows(10);
 		tradesGrid.setSelectionMode(SelectionMode.SINGLE);
 		tradesGrid.addColumn(t->t.getPick() + ", Round " + LeagueInfoManager.getRound(t.getPick()) + " Pick " + LeagueInfoManager.getPickInRound(t.getPick())
 		).setCaption("Pick");
