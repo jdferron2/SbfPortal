@@ -150,7 +150,7 @@ public class SbfPickTradesDAOMysql implements SbfPickTradesDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "delete from sbf_pick_trades where "
 					+ "PICK_NUM = ? and "

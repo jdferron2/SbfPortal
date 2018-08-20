@@ -82,7 +82,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "insert into SBF_LEAGUE "
 					+ "(LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER) "
@@ -116,7 +116,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "update SBF_LEAGUE set"
 					+ "LEAGUE_NAME=?, "
@@ -154,7 +154,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
 		try {
-			conn = ds.getConnection();
+			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "delete from SBF_LEAGUE where "
 					+ "LEAGUE_ID = ? ";
