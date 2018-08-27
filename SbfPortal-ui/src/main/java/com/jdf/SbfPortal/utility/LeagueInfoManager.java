@@ -199,13 +199,20 @@ public class LeagueInfoManager {
 			}
 			testTeamId = draftService.getPickOwnerId(currentPick, UserSessionVars.getCurrentLeague().getLeagueId());
 			if(testTeamId == null || testTeamId == teamId){
-				picks.add(currentPick);	
+				if(UserSessionVars.getDraftService().
+						getSbfDraftRecordByPickNum(currentPick, UserSessionVars.getCurrentLeague().getLeagueId()) ==null) {
+					picks.add(currentPick);
+				}
 			}
 		}
 		for(SbfPickTrade pickTrade : pickTrades){
 			if(!picks.contains(pickTrade.getPick())){
 				if(teamId == draftService.getPickOwnerId(pickTrade.getPick(), UserSessionVars.getCurrentLeague().getLeagueId())){
-					picks.add(pickTrade.getPick());
+					if(UserSessionVars.getDraftService().
+							getSbfDraftRecordByPickNum(pickTrade.getPick(), pickTrade.getLeagueId()) ==null) {
+						picks.add(pickTrade.getPick());
+					}
+					
 				}
 			}
 		}

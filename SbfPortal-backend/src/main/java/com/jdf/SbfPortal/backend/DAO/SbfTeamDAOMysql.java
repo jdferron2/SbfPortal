@@ -129,7 +129,8 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 					+ "OWNER_NAME=?, "
 					+ "TEAM_NAME=?, "
 					+ "DRAFT_SLOT=?, "
-					+ "USER_ID=? "
+					+ "USER_ID=?, "
+					+ "THEME_SONG_URL=? "
 					+ "where league_id = ? and team_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setString(1, r.getOwnerName());

@@ -1,5 +1,7 @@
 package com.jdf.SbfPortal.views;
 
+import java.util.HashMap;
+
 import com.jdf.SbfPortal.SessionAttributes;
 import com.jdf.SbfPortal.UiComponents.ConfirmButton;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
@@ -81,34 +83,28 @@ public class AdminView extends VerticalLayout implements View  {
 			private static final long serialVersionUID = 1L;
 			public void buttonClick(ClickEvent event) {
 				//delete current player table
-				playerService.deleteAllPlayers();
-
+				
+				HashMap<Integer, Player> playerLookup = new HashMap<Integer, Player>();
 				//re-load active players from api
 				Players players = RestAPIUtils.getInstance().invokeQueryPlayers();
-				for(Player player : players.getPlayers()){
-					//if (player.getActive() == 1){
-					playerService.insertPlayer(player);
-					//}			
-				}
+				
 
-				//set pro ranks for all players
+				for(Player p : players.getPlayers()) {
+					p.setProRank(9999);
+					playerLookup.put(p.getPlayerId(), p);
+				}
 				DraftRankings ranks = RestAPIUtils.getInstance().invokeQueryRanks();
 				for(DraftRank rank: ranks.getDraftRanks()){
-					Player player = playerService.getPlayerById(rank.getPlayerId());
+					Player player = playerLookup.get(rank.getPlayerId());
 					if (player != null){
 						player.setProRank(rank.getProRank());
-						playerService.updatePlayer(player);
 					}
 				}
+				
+				playerService.deleteAllPlayers();
+				playerService.batchPlayerInsert(players.getPlayers());
 
-				for (Player p : playerService.getAllPlayers()){
-					if (p.getProRank() == 0){
-						p.setProRank(9999);
-						playerService.updatePlayer(p);
-					}
-				}
-
-				Notification.show("Player list update successfully!");;		
+				Notification.show("Player list update successfully!");	
 			}
 
 		});

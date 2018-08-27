@@ -125,6 +125,16 @@ public class SbfLeagueService {
 		return sbfKeepers;
 	}
 	
+	public synchronized List<SbfKeeper> getAllSbfKeepersForTeam(int leagueId, int teamId){
+		List<SbfKeeper> teamKeepers = new ArrayList<SbfKeeper>();
+		for(SbfKeeper k : sbfKeeperDao.getAllSbfKeepers(leagueId)) {
+			if (k.getTeamId().equals(teamId)) {
+				teamKeepers.add(k);
+			}
+		}
+		return teamKeepers;
+	}
+
 	public synchronized SbfKeeper getSbfKeeperByPlayerId(int playerId, int leagueId){
 		return getAllSbfKeepers(leagueId).stream().filter(
 				k->k.getPlayerId().equals(playerId)).findFirst().orElse(null);
@@ -249,5 +259,10 @@ public class SbfLeagueService {
 			}
 		}
 		return userTeams;
+	}
+	
+	public synchronized SbfUserTeam getSbfUserTeamForTeam(SbfTeam t){
+		return this.getAllSbfUserTeams().stream().filter(
+				ut->ut.getTeamId()==t.getTeamId() && ut.getLeagueId() == t.getLeagueId()).findFirst().orElse(null);
 	}
 }

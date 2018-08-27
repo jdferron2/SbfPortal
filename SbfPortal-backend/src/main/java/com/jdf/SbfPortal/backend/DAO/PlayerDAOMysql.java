@@ -22,6 +22,14 @@ import com.jdf.SbfPortal.backend.utility.PropertyReader;
 public class PlayerDAOMysql implements PlayerDAO {
 	String jdbcUrl;
 	private static Logger logger = Logger.getLogger(PlayerDAOMysql.class);
+	
+	String INSERT_SQL = "insert into PLAYERS "
+			+ "(player_id, pro_rank, full_name, first_name, last_name, height, jersey_num, position, nfl_team, weight, DOB) "
+			+ "values (?,?,?,?,?,?,?,?,?,?,?)";
+	
+	String DELETE_SQL = "delete from PLAYERS "
+			+ "where player_id = ?";
+	
 	public PlayerDAOMysql(){
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
@@ -88,10 +96,8 @@ public class PlayerDAOMysql implements PlayerDAO {
 		Connection conn = null;
 		try {
 			conn = DriverManager.getConnection(jdbcUrl);
-			String sql = "insert into PLAYERS "
-					+ "(player_id, pro_rank, full_name, first_name, last_name, height, jersey_num, position, nfl_team, weight, DOB) "
-					+ "values (?,?,?,?,?,?,?,?,?,?,?)";
-			prepStmt = conn.prepareStatement(sql);
+			
+			prepStmt = conn.prepareStatement(INSERT_SQL);
 
 			prepStmt.setInt(1, p.getPlayerId());
 			prepStmt.setInt(2, p.getProRank());
@@ -122,6 +128,43 @@ public class PlayerDAOMysql implements PlayerDAO {
 		}	
 	}
 
+	public void insertPlayersBatch(List<Player> playerList) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(jdbcUrl);
+			
+			prepStmt = conn.prepareStatement(INSERT_SQL);
+			for(Player p : playerList) {
+				prepStmt.setInt(1, p.getPlayerId());
+				prepStmt.setInt(2, p.getProRank());
+				prepStmt.setString(3, p.getDisplayName());
+				prepStmt.setString(4, p.getFname());
+				prepStmt.setString(5, p.getLname());
+				prepStmt.setString(6, p.getHeight());
+				prepStmt.setInt(7, p.getJersey());	
+				prepStmt.setString(8, p.getPosition());
+				prepStmt.setString(9, p.getTeam());
+				prepStmt.setInt(10, p.getWeight());	
+				prepStmt.setDate(11, p.getDob());
+				prepStmt.addBatch();
+			}
+			prepStmt.executeBatch();
+		} catch (Exception ex) {
+			logger.error("Error in insertPlayer() call: " + ex.getMessage());
+			logger.error("Stack Trace: ", ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
+	}
 	public void deletePlayer(Player p) {
 		PreparedStatement prepStmt=null;
 		Connection conn = null;
@@ -129,12 +172,43 @@ public class PlayerDAOMysql implements PlayerDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 			//stmt = conn.createStatement();
 
-			String sql = "delete from PLAYERS "
-					+ "where player_id = ?";
-			prepStmt = conn.prepareStatement(sql);
+			
+			prepStmt = conn.prepareStatement(DELETE_SQL);
 
 			prepStmt.setInt(1, p.getPlayerId());
 			prepStmt.execute();
+			//getAllPlayers().remove(p);
+		} catch (Exception ex) {
+			logger.error("Error in deletePlayer() call: " + ex.getMessage());
+			logger.error("Stack Trace: ", ex);
+		}
+		finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException sqlEx) { } // ignore
+
+				conn = null;
+			}
+
+		}	
+	}
+	
+	public void deletePlayersBatch(List<Player> players) {
+		PreparedStatement prepStmt=null;
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(jdbcUrl);
+			//stmt = conn.createStatement();
+
+			
+			prepStmt = conn.prepareStatement(DELETE_SQL);
+			
+			for(Player p : players) {
+				prepStmt.setInt(1, p.getPlayerId());
+				prepStmt.addBatch();
+			}
+			prepStmt.executeBatch();
 			//getAllPlayers().remove(p);
 		} catch (Exception ex) {
 			logger.error("Error in deletePlayer() call: " + ex.getMessage());

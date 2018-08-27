@@ -9,4 +9,6 @@ public interface PlayerDAO {
 	void insertPlayer(Player p);
 	void updatePlayer(Player p);
 	void deletePlayer(Player p);
+	void insertPlayersBatch(List<Player> p);
+	void deletePlayersBatch(List<Player> p);
 }

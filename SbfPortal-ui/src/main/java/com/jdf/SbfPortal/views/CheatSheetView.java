@@ -242,11 +242,12 @@ public class CheatSheetView extends HorizontalLayout implements View {
 
 	public boolean gridFilter(SbfRank r){
 		Player p = playerService.getPlayerById(r.getPlayerId());
-		if(UserSessionVars.getCurrentLeague() != null){
-			if(leagueService.getSbfKeeperByPlayerId(p.getPlayerId(), UserSessionVars.getCurrentLeague().getLeagueId()) != null){
-				return false;
-			}
-		}
+		//below will hide keepers...dont think i like this
+//		if(UserSessionVars.getCurrentLeague() != null){
+//			if(leagueService.getSbfKeeperByPlayerId(p.getPlayerId(), UserSessionVars.getCurrentLeague().getLeagueId()) != null){
+//				return false;
+//			}
+//		}
 
 		if(playerService.getPlayerById(r.getPlayerId()).getProRank() > 500){
 			return false;

@@ -134,14 +134,22 @@ public class PlayerService {
 	}
 	
 	public synchronized void deleteAllPlayers(){
-		for (Player p : getAllPlayers()){
-			playerDao.deletePlayer(p);
-		}
-		players = null;
+		this.batchPlayerDelete(getAllPlayers());
 	}
 
 	public synchronized void insertPlayer(Player player) {
 		playerDao.insertPlayer(player);	
+		getAllPlayers().add(player);
+	}
+	
+	public synchronized void batchPlayerInsert(List<Player> players) {
+		playerDao.insertPlayersBatch(players);
+		getAllPlayers().addAll(players);
+	}
+	
+	public synchronized void batchPlayerDelete(List<Player> players) {
+		playerDao.deletePlayersBatch(players);
+		getAllPlayers().removeAll(players);
 	}
 
 	public synchronized void updatePlayer(Player player) {

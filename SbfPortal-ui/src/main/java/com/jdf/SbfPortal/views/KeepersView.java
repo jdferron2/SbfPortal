@@ -16,11 +16,15 @@ import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.shared.ui.grid.HeightMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -71,17 +75,26 @@ public class KeepersView extends VerticalLayout implements View {
 		keepersGrid = configureKeeperGrid(keeperList);
 		final HorizontalLayout layout = new HorizontalLayout();
 		layout.setMargin(false);
-		layout.setSizeFull();
-		layout.setSpacing(false);
-		layout.addComponents(playersGrid, keepersGrid);
+		layout.setSpacing(true);
+		//layout.setHeightUndefined();
 		setSizeFull();
-		Button draftKeepersButton = new Button("Draft All Keepers");
-		draftKeepersButton.addClickListener(new Button.ClickListener()
-		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
-		{
-			draftAllKeepers();
-		} });
-		addComponents(draftKeepersButton, layout);
+		layout.setSizeFull();
+		layout.setWidthUndefined();
+		if(UserSessionVars.getAccessControl().isUserLeagueManager()) {
+			layout.addComponent(playersGrid);
+			Button draftKeepersButton = new Button("Draft All Keepers");
+			draftKeepersButton.addClickListener(new Button.ClickListener()
+			{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+			{
+				draftAllKeepers();
+			} });
+			addComponent(draftKeepersButton);
+			
+		}
+		layout.addComponents(keepersGrid);
+		updateGridSizes();
+		//setSizeUndefined();
+		addComponents( layout);
 		setExpandRatio(layout, 1);
 	}
 
@@ -92,13 +105,16 @@ public class KeepersView extends VerticalLayout implements View {
 		playersGrid.setItems(players);
 
 		playersGrid.setSizeFull();
+		playersGrid.setWidth("600px");
 		playersGrid.setSelectionMode(SelectionMode.SINGLE);
 		playersGrid.addColumn(Player::getProRank).setCaption("Pro Rank").setId("ProRankColumn").setMaximumWidth(80);
 		playersGrid.addColumn(Player::getPosition).setCaption("Position").setId("PositionColumn").setMaximumWidth(80);
 		playersGrid.addColumn(Player::getDisplayName).setCaption("Name").setId("PlayerNameColumn");
 		playersGrid.addColumn(Player::getTeam).setCaption("Team");
-		playersGrid.addColumn(player->"Set Keeper", keeperButtonRenderer()).setId("KeeperColumn");
-
+		
+		if(UserSessionVars.getAccessControl().isUserLeagueManager()) {
+			playersGrid.addColumn(player->"Set Keeper", keeperButtonRenderer()).setId("KeeperColumn");
+		}
 		playersDataProvider = (ListDataProvider<Player>) playersGrid.getDataProvider();
 
 		playersDataProvider.setFilter(p->p, p -> playersGridFilter(p));
@@ -132,17 +148,20 @@ public class KeepersView extends VerticalLayout implements View {
 		keepersGrid.setCaption("Kept Players");
 		keepersGrid.setItems(keepers);
 
-		keepersGrid.setSizeFull();
+		//keepersGrid.setSizeFull();
 		keepersGrid.setSelectionMode(SelectionMode.SINGLE);
 		keepersGrid.addColumn(k->leagueService.getSbfTeamByTeamId(k.getTeamId(), leagueId).getOwnerName()).setCaption("Team").setId("TeamColumn");
 		keepersGrid.addColumn(SbfKeeper::getRound).setCaption("Round Kept").setId("RoundKeptColumn").setMaximumWidth(70);
 		keepersGrid.addColumn(k->playerService.getPlayerById(k.getPlayerId()).getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
 
-		keepersGrid.addColumn(k->"Delete Keeper", deleteKeeperButtonRenderer()).setId("DeleteColumn");
+		if(UserSessionVars.getAccessControl().isUserLeagueManager()) {
+			keepersGrid.addColumn(k->"Delete Keeper", deleteKeeperButtonRenderer()).setId("DeleteColumn");	
+		}
 
 		keepersDataProvider = (ListDataProvider<SbfKeeper>) keepersGrid.getDataProvider();
 
-
+		keepersGrid.setSizeFull();
+		keepersGrid.setWidth("600px");
 		keepersGrid.sort("TeamColumn");
 
 		return keepersGrid;
@@ -169,6 +188,7 @@ public class KeepersView extends VerticalLayout implements View {
 			if (r != null) draftService.deleteSbfDraftRecord(r);
 			keepersDataProvider.refreshAll();
 			playersDataProvider.refreshAll();
+			updateGridSizes();
 		});
 		return deleteKeeperButtonRenderer;
 	}
@@ -200,35 +220,56 @@ public class KeepersView extends VerticalLayout implements View {
 			if (r !=null) {
 				draftService.deleteSbfDraftRecord(r);
 			}
-			int pick = 0;
-			int draftSlot = leagueService.getSbfTeamByTeamId(k.getTeamId(), leagueId).getDraftSlot();
-			if (k.getRound() == 1){
-				pick = draftSlot;
-			}else if(k.getRound() % 2 == 0){
-				pick = LeagueInfoManager.NUMBER_OF_TEAMS * k.getRound() - draftSlot + 1;
-			}else{
-				pick = LeagueInfoManager.NUMBER_OF_TEAMS * (k.getRound() - 1) + draftSlot;
-			}
-			draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
-					pick, new Timestamp(System.currentTimeMillis())));
+			draftKeeper(k);
 		}
 
-		//int leagueId, int sbfId, int playerId, int slotDrafted, Timestamp timeDrafted
 	}
 
-	private void draftKeeper(SbfKeeper k){
-		if (draftService.getSbfDraftRecordByPlayerId(k.getPlayerId(), leagueId)!=null) return;
-		int pick = 0;
-		int draftSlot = leagueService.getSbfTeamByTeamId(k.getTeamId(), leagueId).getDraftSlot();
-		if (k.getRound() == 1){
-			pick = draftSlot;
-		}else if(k.getRound() % 2 == 0){
-			pick = LeagueInfoManager.NUMBER_OF_TEAMS * k.getRound() - draftSlot + 1;
-		}else{
-			pick = LeagueInfoManager.NUMBER_OF_TEAMS * (k.getRound() - 1) + draftSlot;
+	private boolean draftKeeper(SbfKeeper k){
+		if(UserSessionVars.getLeagueService().getAllSbfKeepersForTeam(leagueId, k.getTeamId()).size() > 4) {
+			Notification.show("Selected team already has hit defined keeper limit.", Type.WARNING_MESSAGE);
+			return false;
 		}
-		draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
-				pick, new Timestamp(System.currentTimeMillis())));
+		if (draftService.getSbfDraftRecordByPlayerId(k.getPlayerId(), leagueId)!=null) {
+			Notification.show("Player already Kept", Type.ERROR_MESSAGE);
+			return false;
+		}
+		int keeperPick = 0;
+		for(Integer i : UserSessionVars.getLeagueManager().getPicksForTeam(k.getTeamId())) {
+			if(LeagueInfoManager.getRound(i) <= k.getRound()) {
+				if(i> keeperPick) {
+					if (UserSessionVars.getDraftService().getSbfDraftRecordByPickNum(i, leagueId) == null) {
+						keeperPick=i;
+					}
+				}
+			}
+		}
+		
+		if(keeperPick > 0) {
+			draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
+					keeperPick, new Timestamp(System.currentTimeMillis())));
+			return true;
+		}else {
+			if(k.getRound() < 5) {//maybe theres already a keeper taking all the spots available, so move to the next round
+				for(Integer i : UserSessionVars.getLeagueManager().getPicksForTeam(k.getTeamId())) {
+					if(LeagueInfoManager.getRound(i) < 6) {
+						if (UserSessionVars.getDraftService().getSbfDraftRecordByPickNum(i, leagueId) == null && (i<keeperPick || keeperPick ==0) ) {
+							keeperPick=i;
+						}
+					}
+				}
+			}
+			if(keeperPick > 0) {
+				draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
+						keeperPick, new Timestamp(System.currentTimeMillis())));
+				return true;
+			}else {
+				Notification.show("Could not find required draft pick",Type.WARNING_MESSAGE );
+				return false;
+			}
+			
+		}
+		
 	}
 	private Window getSetKeeperWindow(int playerId){
 		Window subWindow = new Window(playerService.getPlayerById(playerId).getDisplayName());
@@ -249,10 +290,13 @@ public class KeepersView extends VerticalLayout implements View {
 		{
 			if (selectRound.getValue() != null && selectTeam.getValue() != null){
 				SbfKeeper k = new SbfKeeper(leagueId, selectTeam.getValue().getTeamId(), playerId, selectRound.getValue());
-				leagueService.insertSbfKeeper(k);
-				draftKeeper(k);
-				keepersDataProvider.refreshAll();
-				playersDataProvider.refreshAll();
+				if(draftKeeper(k)) {
+					leagueService.insertSbfKeeper(k);
+					keepersDataProvider.refreshAll();
+					playersDataProvider.refreshAll();
+					updateGridSizes();
+				}
+				
 				subWindow.close();
 			}
 		} });
@@ -263,6 +307,11 @@ public class KeepersView extends VerticalLayout implements View {
 		//	subWindow.setClosable(false);
 		return subWindow;
 
+	}
+	
+	private void updateGridSizes() {
+	//	keepersGrid.setHeightByRows(keepersDataProvider.getItems().size());
+		//playersGrid.setHeightByRows(playersDataProvider.getItems().size());
 	}
 
 }

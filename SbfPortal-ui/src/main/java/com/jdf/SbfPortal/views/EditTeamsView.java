@@ -5,6 +5,8 @@ import java.util.List;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.SbfTeam;
+import com.jdf.SbfPortal.backend.data.SbfUser;
+import com.jdf.SbfPortal.backend.data.SbfUserTeam;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
@@ -14,6 +16,7 @@ import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -71,15 +74,30 @@ public class EditTeamsView extends VerticalLayout implements View {
 		teamsGrid = new Grid<>();
 		teamsGrid.setCaption("Teams");
 		teamsGrid.setItems(teams);
-
+		//SbfUserTeam ut;
 		teamsGrid.setSizeFull();
 		teamsGrid.setSelectionMode(SelectionMode.SINGLE);
 		teamsGrid.addColumn(SbfTeam::getOwnerName).setCaption("Owner").setId("OwnerColumn");
 		teamsGrid.addColumn(SbfTeam::getTeamName).setCaption("Team Name").setId("TeamColumn");
 		teamsGrid.addColumn(SbfTeam::getDraftSlot).setCaption("Draft Slot").setId("DraftslotColumn").setMaximumWidth(80);
 		teamsGrid.addColumn(SbfTeam::getThemeSongUrl).setCaption("Theme Song").setId("ThemeSongColumn");
+		teamsGrid.addColumn(t->{SbfUserTeam ut = UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t);
+								return ut == null ? null : UserSessionVars.getLeagueService().getSbfUserById(ut.getUserId()).getUserName();}).
+					setCaption("User").setId("userColumn");
+		
 		teamsGrid.addColumn(s->"Edit Team", editButtonRenderer()).setId("EditColumn");
 
+		teamsGrid.getColumn("EditColumn").setStyleGenerator(t -> {
+			SbfUserTeam ut = UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t);
+			if (UserSessionVars.getAccessControl().isUserLeagueManager()) return null;
+			if (ut == null) { return "hidden";}
+			if (ut.getUserId() != UserSessionVars.getCurrentUser().getUserId()) {
+				return "hidden" ;
+			}else{
+				return null;
+			}
+		});
+		
 		teamsDataProvider = (ListDataProvider<SbfTeam>) teamsGrid.getDataProvider();
 
 		teamsDataProvider.setFilter(t->t, t -> teamsGridFilter(t));
@@ -111,6 +129,8 @@ public class EditTeamsView extends VerticalLayout implements View {
 	private Window getEditTeamWindow(SbfTeam t){
 		String teamName = t.getTeamName();
 		String themeSong = t.getThemeSongUrl() == null ? "" : t.getThemeSongUrl();
+		ComboBox<SbfUser> usersCB =
+				new ComboBox<>("Available Users");
 		
 		if (teamName == null) teamName = "";
 		Window subWindow = new Window(t.getOwnerName() + " - " + t.getTeamName());
@@ -128,7 +148,32 @@ public class EditTeamsView extends VerticalLayout implements View {
 		ownerName.setWidth("100%");
 		ownerName.addStyleName(ValoTheme.TEXTFIELD_TINY);
 		ownerName.setValue(t.getOwnerName());
-
+		
+		SbfUserTeam ut = UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t);
+		SbfUser user=null;
+		if (ut != null ) { user=UserSessionVars.getLeagueService().getSbfUserById(ut.getUserId());}
+		HorizontalLayout userLayout = new HorizontalLayout();
+		if(user != null) {
+			Label userName = new Label("User: " + user.getUserName());
+			Button removeButton = new Button("Remove");
+			removeButton.setStyleName(ValoTheme.BUTTON_LINK);
+			removeButton.addClickListener(new Button.ClickListener()
+			{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+			{
+				UserSessionVars.getLeagueService().deleteSbfUserTeam(
+						UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t));
+				removeButton.setCaption("(User Removed)");
+				removeButton.setEnabled(false);
+			}
+			});
+			userLayout.addComponents(userName, removeButton);
+		}else {
+			usersCB.setItems(UserSessionVars.getLeagueService().getAllSbfUsers());
+			usersCB.setItemCaptionGenerator(u->u.getUserName());
+			userLayout.addComponents(usersCB);
+		}
+		
+		
 		subContent.setMargin(true);
 		ComboBox<Integer> draftSlotCB =
 				new ComboBox<>("Draft Slot");
@@ -159,6 +204,16 @@ public class EditTeamsView extends VerticalLayout implements View {
 				t.setOwnerName(ownerName.getValue());
 			}
 			t.setThemeSongUrl(themeSongUrl.getValue());
+			
+			if(usersCB.getValue() !=null) {
+				t.setUserId(usersCB.getValue().getUserId());
+				SbfUserTeam ut = new SbfUserTeam();
+				ut.setDefaultRankSetId(0);
+				ut.setLeagueId(leagueId);
+				ut.setTeamId(t.getTeamId());
+				ut.setUserId(usersCB.getValue().getUserId());
+				leagueService.insertSbfUserTeam(ut);
+			}
 			leagueService.updateSbfTeam(t);
 			if (t2!=null) leagueService.updateSbfTeam(t2);
 			teamsDataProvider.refreshAll();
@@ -166,7 +221,11 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 		} });
 
-		subContent.addComponents(teamNameTextField, ownerName, draftSlotCB, submitButton, themeSongUrl);
+		if (UserSessionVars.getAccessControl().isUserLeagueManager()){
+			subContent.addComponents(teamNameTextField, ownerName, userLayout, draftSlotCB, submitButton, themeSongUrl);
+		}else {
+			subContent.addComponents(teamNameTextField, ownerName, submitButton, themeSongUrl);
+		}
 		subWindow.setContent(subContent);
 		subWindow.center();
 

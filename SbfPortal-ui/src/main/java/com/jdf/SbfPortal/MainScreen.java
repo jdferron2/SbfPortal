@@ -48,8 +48,12 @@ public class MainScreen extends HorizontalLayout {
 
 				if(UserSessionVars.getAccessControl().isUserLeagueManager()){
 					menu.addView(new EditTeamsView(), EditTeamsView.NAME, EditTeamsView.NAME, null);
-					menu.addView(new KeepersView(), KeepersView.NAME, KeepersView.NAME, null);
+					
+				}else {//not league manager, but still want to view teams / edit your own team.
+					menu.addView(new EditTeamsView(), EditTeamsView.NAME, "View Teams", null);
 				}
+				
+				menu.addView(new KeepersView(), KeepersView.NAME, KeepersView.NAME, null);
 			}
 			if(UserSessionVars.getAccessControl().isUserInRole("admin")){
 				menu.addView(new AdminView(), AdminView.NAME, AdminView.NAME, null);

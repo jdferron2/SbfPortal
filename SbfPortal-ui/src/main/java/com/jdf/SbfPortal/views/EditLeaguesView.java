@@ -73,6 +73,11 @@ public class EditLeaguesView extends VerticalLayout implements View {
 
 	void buildView(){
 		leagueList =  leagueService.getAllSbfLeaguesManagedByUser(UserSessionVars.getCurrentUser().getUserId());
+		if (leagueList.size() ==0) {
+			Label noLeaguesLabel = new Label("You don't run any leagues.");
+			this.addComponent(noLeaguesLabel);
+			return;
+		}
 		tradesList = draftService.getAllSbfPickTrades(UserSessionVars.getCurrentLeague().getLeagueId());
 		leaguesGrid = configureLeagueGrid(leagueList);
 		tradesGrid = configureTradesGrid(tradesList);
