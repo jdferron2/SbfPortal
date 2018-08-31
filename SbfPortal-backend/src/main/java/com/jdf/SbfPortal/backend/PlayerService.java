@@ -59,6 +59,14 @@ public class PlayerService {
 		return sbfRanks;
 	}
 	
+	public synchronized List<SbfRank> getAllSbfRanksBetween(Integer minRank, Integer maxRank, Integer rankSetId) {
+		List<SbfRank> ranks = new ArrayList<SbfRank>();
+		for(SbfRank r : getAllSbfRanks(rankSetId)){
+			if (r.getRank() < maxRank && r.getRank() > minRank) ranks.add(r);			
+		}
+		return ranks;
+	}
+	
 	public synchronized List<SbfRankSet> getAllSbfRankSets(Integer userId) {
 		if (sbfRankSets == null) {
 			sbfRankSets = sbfRankSetsDao.getAllSbfRankSets(userId);
@@ -193,6 +201,14 @@ public class PlayerService {
 	public synchronized void insertSbfRankSet(SbfRankSet s){
 		getAllSbfRankSets(s.getUserId()).add(s);
 		sbfRankSetsDao.insertSbfRankSet(s);
+	}
+	
+	public synchronized void updateSbfRank(SbfRank r) {
+		sbfRankDao.updateSbfRank(r);
+	}
+	
+	public synchronized void updateSbfRankSet(SbfRankSet s) {
+		sbfRankSetsDao.updateSbfRankSet(s);
 	}
 
 }

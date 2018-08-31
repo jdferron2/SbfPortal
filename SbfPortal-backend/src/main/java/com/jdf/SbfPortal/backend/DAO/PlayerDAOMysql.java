@@ -81,6 +81,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					stmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -120,6 +121,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -158,6 +160,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -186,6 +189,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -218,6 +222,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -244,6 +249,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -293,6 +299,7 @@ public class PlayerDAOMysql implements PlayerDAO {
 			if (conn != null) {
 				try {
 					conn.close();
+					prepStmt.close();
 				} catch (SQLException sqlEx) { } // ignore
 
 				conn = null;
@@ -300,4 +307,30 @@ public class PlayerDAOMysql implements PlayerDAO {
 
 		}	
 	}
+//	public void updateTableTemp() {
+//		//alter table sbf_ranks add column TIER varchar(20);
+//		Statement stmt=null;
+//		Connection conn = null;
+//		try {
+//			conn = DriverManager.getConnection(jdbcUrl);
+//			stmt = conn.createStatement();
+//			stmt.executeUpdate("alter table SBF_RANKS drop column TIER");
+//			stmt.executeUpdate("alter table SBF_RANKS add column TIER integer default 0");
+//			
+//		} catch (Exception ex) {
+//			//don't care, its temporary
+//		}
+//		finally {
+//			if (conn != null) {
+//				try {
+//					conn.close();
+//					stmt.close();
+//				} catch (SQLException sqlEx) { } // ignore
+//
+//				conn = null;
+//			}
+//
+//		}	
+//	}
+	
 }

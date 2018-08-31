@@ -118,7 +118,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 		try {
 			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "update SBF_LEAGUE set"
+			String sql = "update SBF_LEAGUE set "
 					+ "LEAGUE_NAME=?, "
 					+ "NUM_TEAMS=?, "
 					+ "LEAGUE_MANAGER=? "

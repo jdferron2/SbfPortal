@@ -46,15 +46,17 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "RANK_SET_ID, PLAYER_ID, RANK "
+					+ "RANK_SET_ID, PLAYER_ID, RANK, TIER "
 					+ "from SBF_RANKS "
-					+ "where RANK_SET_ID = " + rankSetId;
+					+ "where RANK_SET_ID = " + rankSetId
+					+ " order by RANK asc";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
 				SbfRank rank = new SbfRank(rs.getInt("RANK_SET_ID"),
 						rs.getInt("PLAYER_ID"),
-						rs.getInt("RANK"));			
+						rs.getInt("RANK"),
+						rs.getInt("TIER"));			
 				sbfRanks.add(rank);    				
 			}
 		} catch (Exception ex) {
@@ -80,13 +82,14 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "insert into SBF_RANKS "
-					+ "(player_id, rank_set_id, rank) "
-					+ "values (?,?,?)";
+					+ "(player_id, rank_set_id, rank, tier) "
+					+ "values (?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, s.getPlayerId());
 			prepStmt.setInt(2, s.getRankSetId());
 			prepStmt.setInt(3, s.getRank());	
+			prepStmt.setInt(4, s.getTier());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ",  ex);
@@ -137,12 +140,14 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "update SBF_RANKS set "
-					+ "rank = ? "
+					+ "rank = ?, "
+					+ "tier = ? "
 					+ "where rank_set_id = ? and player_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, rank.getRank());
-			prepStmt.setInt(2, rank.getRankSetId());
-			prepStmt.setInt(3, rank.getPlayerId());
+			prepStmt.setInt(2, rank.getTier());
+			prepStmt.setInt(3, rank.getRankSetId());
+			prepStmt.setInt(4, rank.getPlayerId());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ",  ex);

@@ -1,4 +1,5 @@
 @import "sbftheme.scss";
+@import "tiercolors.scss";
 @import "addons.scss";
 
 // This file prefixes all rules with the theme name to avoid causing conflicts with other themes.
@@ -7,5 +8,6 @@
 .sbftheme {
   @include addons;
   @include sbftheme;
+  @include tierColors;
 
 }

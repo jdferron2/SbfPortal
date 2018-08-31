@@ -13,4 +13,10 @@ public class BroadcastCommands {
 	 * 0 - SbfDraftRecord record to be removed
 	 */
 	public static final String UNDO_DRAFT_PICK = "UndoDraftPick";
+	
+	/**
+	 * Arguments: <br>
+	 *
+	 */
+	public static final String RESUME_DRAFT = "ResumeDraft";
 }

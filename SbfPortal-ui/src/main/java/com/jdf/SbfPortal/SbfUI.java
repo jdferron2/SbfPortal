@@ -7,26 +7,18 @@ import org.apache.log4j.xml.DOMConfigurator;
 
 import com.jdf.SbfPortal.authentication.AccessControl;
 import com.jdf.SbfPortal.authentication.BasicAccessControl;
-import com.jdf.SbfPortal.authentication.LoginScreen;
-import com.jdf.SbfPortal.authentication.LoginScreen.LoginListener;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
-import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.MessageHandler;
 import com.jdf.SbfPortal.utility.UncaughtExceptionHandler;
-import com.jdf.SbfPortal.views.CheatSheetView;
 import com.jdf.SbfPortal.views.HomeView;
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
-import com.vaadin.navigator.Navigator;
-import com.vaadin.navigator.View;
 import com.vaadin.server.Responsive;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
-import com.vaadin.ui.MenuBar.Command;
-import com.vaadin.ui.MenuBar.MenuItem;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.themes.ValoTheme;
 
@@ -35,24 +27,16 @@ import com.vaadin.ui.themes.ValoTheme;
 @Push
 public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 	private AccessControl accessControl = new BasicAccessControl();
-	private Navigator 			navigator;	
+
 	boolean initialized = false;
 	private MessageHandler handler;
 	private static Logger logger;
-	private Integer leagueId;
 
 	@VaadinServletConfiguration(productionMode = false, ui = SbfUI.class)
 	@Resource(name="jdbc/MyDB")
 	public static class Servlet extends VaadinServlet {
 	}
-	private final Command menuCommand = new Command() {
-		@Override
-		public void menuSelected(final MenuItem selectedItem) {
-			String navString = selectedItem.getText();
-			if (navString.equals("Cheatsheet")) navString = "";
-			navigator.navigateTo(navString);
-		}
-	};
+
 
 	@Override
 	protected void init(VaadinRequest request) {
@@ -64,18 +48,6 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 		Responsive.makeResponsive(this);
 		getPage().setTitle("Awesome Draft");
 		showMainView();
-//		if (!accessControl.isUserSignedIn()) {
-//
-//			setContent(new LoginScreen(accessControl, new LoginListener() {
-//				@Override
-//				public void loginSuccessful() {
-//					leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
-//					showMainView();
-//				}
-//			}));
-//		} else {
-//			showMainView();
-//		}
 	}
 
 	@Override
@@ -113,7 +85,7 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 		getNavigator().setErrorView(new HomeView());
 		getNavigator().navigateTo(getNavigator().getState());
 	}
-	
+
 	private void configureLog4j(){
 		String url = "";
 		url = VaadinServlet.getCurrent().getServletContext().getRealPath("/WEB-INF") + "/sbfportal-log4j.xml";
@@ -125,7 +97,7 @@ public class SbfUI extends UI implements Broadcaster.BroadcastListener{
 
 	@Override
 	public Integer getLeagueId() {
-		return leagueId;
+		return UserSessionVars.getCurrentLeague().getLeagueId();
 	}
 
 }

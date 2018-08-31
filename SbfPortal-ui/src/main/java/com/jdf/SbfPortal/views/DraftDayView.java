@@ -14,6 +14,7 @@ import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
+import com.jdf.SbfPortal.backend.data.SbfLeague;
 import com.jdf.SbfPortal.backend.utility.BroadcastCommands;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
@@ -22,24 +23,25 @@ import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.BrowserWindowOpener;
-import com.vaadin.server.ExternalResource;
-import com.vaadin.server.Page;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Audio;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.MenuBar.Command;
 import com.vaadin.ui.MenuBar.MenuItem;
-import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.components.grid.FooterRow;
 import com.vaadin.ui.components.grid.HeaderRow;
 import com.vaadin.ui.renderers.ButtonRenderer;
 import com.vaadin.ui.themes.ValoTheme;
@@ -190,7 +192,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			draftedGrid.setSizeFull();
 			draftedGrid.setSelectionMode(SelectionMode.SINGLE);
 			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getDisplayName())
-			.setCaption("Player Name");
+			.setCaption("Player Name").setId("NameColumn");
 			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getPosition())
 			.setCaption("Position");
 			draftedGrid.addColumn(s->leagueService.getSbfTeamByTeamId(s.getTeamId(), leagueId).getOwnerName())
@@ -205,12 +207,58 @@ public class DraftDayView extends HorizontalLayout implements View {
 						return null;
 					}
 				});
+				FooterRow footer = draftedGrid.prependFooterRow();
+				footer.getCell("NameColumn").setComponent(manualEntryButton() );
 			}
 			draftedPlayersDataProvider = (ListDataProvider<SbfDraftRecord>) draftedGrid.getDataProvider();
+			
 			draftedGrid.sort("DraftedColumn");
 			
 
 			return draftedGrid;
+		}
+		
+		private Button manualEntryButton (){
+			Button button = new Button("Manual Lookup");
+			button.setStyleName(ValoTheme.BUTTON_LINK);
+			button.addClickListener(clickEvent -> {
+				UI.getCurrent().addWindow(getManualEntryWindow());
+			});
+			return button;
+		}
+		
+		private Window getManualEntryWindow(){
+			Window subWindow = new Window("Manual Lookup");
+			VerticalLayout subContent = new VerticalLayout();
+			ComboBox<Player> playersLookup = new ComboBox<Player>("Player");
+			playersLookup.setItems(UserSessionVars.getPlayerService().getAllPlayers());
+			playersLookup.setItemCaptionGenerator(Player::getDisplayName);
+			subContent.setMargin(true);
+
+			Button submitButton = new Button("Submit");
+			submitButton.addClickListener(new Button.ClickListener()
+			{ @Override public void buttonClick(Button.ClickEvent clickEvent)
+			{
+				Player selectedPlayer = playersLookup.getValue();
+				if(selectedPlayer!=null) {
+					if(UserSessionVars.getDraftService().getSbfDraftRecordByPlayerId(selectedPlayer.getPlayerId(), 
+							UserSessionVars.getCurrentLeague().getLeagueId()) == null) {
+						//ok to draft the player
+						processDraftPick(selectedPlayer);
+					}else {
+						Notification.show("Player already drafted", Type.WARNING_MESSAGE);
+					}
+				}
+				subWindow.close();
+
+			} });
+
+			subContent.addComponents(playersLookup, submitButton);
+			subWindow.setContent(subContent);
+			subWindow.center();
+
+			//	subWindow.setClosable(false);
+			return subWindow;
 		}
 
 		@SuppressWarnings("unchecked")
@@ -226,6 +274,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 			availableGrid.addColumn(Player::getPosition).setCaption("Position").setId("PositionColumn");
 			availableGrid.addColumn(Player::getDisplayName).setCaption("Name").setId("PlayerNameColumn");
 			availableGrid.addColumn(Player::getTeam).setCaption("Team");
+			availableGrid.addColumn(p->{
+				return playerService.getSbfRankById(p.getPlayerId(), rankSetId).getTier();
+			}).setCaption("Tier");
 			if(UserSessionVars.getAccessControl().isUserLeagueManager()){
 				availableGrid.addColumn(player->"Draft!", draftedButtonRenderer()).setId("DraftedColumn");
 				availableGrid.getColumn("DraftedColumn").setStyleGenerator(p -> {
@@ -236,6 +287,14 @@ public class DraftDayView extends HorizontalLayout implements View {
 					}
 				});
 			}			
+			availableGrid.setStyleGenerator(player -> {
+				int tier = playerService.getSbfRankById(player.getPlayerId(), rankSetId).getTier();
+				if (tier>0) {
+					return "T"+tier;
+				} else {
+					return null;
+				}
+			});
 
 			playersDataProvider = (ListDataProvider<Player>) availableGrid.getDataProvider();
 
@@ -347,22 +406,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 			ButtonRenderer<Object> draftButtonRenderer = new ButtonRenderer<Object>();
 			draftButtonRenderer.addClickListener(clickEvent -> {
 				Player selectedPlayer = (Player)clickEvent.getItem();
-				SbfDraftRecord r = leagueMgr.draftPlayer(selectedPlayer, leagueId);
-				//availableGrid.getDataProvider().refreshAll();
-				draftedGrid.getDataProvider().refreshAll();
-				//availableGrid.getDataProvider().refreshItem(selectedPlayer);
-				playersDataProvider.refreshAll();
-				int randomInt = rand.nextInt(99) + 1;
-				if (randomInt < 12 && icingEnabled) isAWinner=true;
-				for(UI t : getSession().getUIs()){
-					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(isAWinner, false);
-					}else if(t.getClass().equals(DraftBoardPopupUI.class)){
-						((DraftBoardPopupUI) t).addDraftSelection(r);
-					}
-				}
-				Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, new Object[] {r, isAWinner});
-				setOnTheClockCaption();
+				
+				processDraftPick(selectedPlayer);
+				
 			});
 			return draftButtonRenderer;
 		}
@@ -389,6 +435,22 @@ public class DraftDayView extends HorizontalLayout implements View {
 			return undoButtonRenderer;
 		}
 
+		private void processDraftPick(Player p) {
+			SbfDraftRecord r = leagueMgr.draftPlayer(p, leagueId);
+			draftedGrid.getDataProvider().refreshAll();
+			playersDataProvider.refreshAll();
+			int randomInt = rand.nextInt(99) + 1;
+			if (randomInt < 12 && icingEnabled) isAWinner=true;
+			for(UI t : getSession().getUIs()){
+				if(t.getClass().equals(DraftDisplayPopupUI.class)){
+					((DraftDisplayPopupUI) t).processPick(isAWinner, false);
+				}else if(t.getClass().equals(DraftBoardPopupUI.class)){
+					((DraftBoardPopupUI) t).addDraftSelection(r);
+				}
+			}
+			Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.DRAFT_PLAYER, new Object[] {r, isAWinner});
+			setOnTheClockCaption();
+		}
 		public void setOnTheClockCaption(){
 			String teamOnTheClock = leagueMgr.getTeamOnTheClock().getOwnerName();
 			int round = leagueMgr.getRound();
@@ -420,6 +482,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 						((DraftDisplayPopupUI) t).processPick(false, false);
 					}			
 				}
+				Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.RESUME_DRAFT,null);
 				resumeWindow.close();
 			}
 			});

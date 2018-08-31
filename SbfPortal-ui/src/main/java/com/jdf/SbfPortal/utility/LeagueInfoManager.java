@@ -2,6 +2,7 @@ package com.jdf.SbfPortal.utility;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.jdf.SbfPortal.authentication.UserSessionVars;
@@ -157,6 +158,135 @@ public class LeagueInfoManager {
 		playerService.addRankToUpdateList(sbfRank);
 	}
 
+	public synchronized void swapRanks(SbfRank rank1, SbfRank rank2) {
+		int tempRank = rank1.getRank();
+		rank1.setRank(rank2.getRank());
+		rank2.setRank(tempRank);
+		playerService.addRankToUpdateList(rank1);
+		playerService.addRankToUpdateList(rank2);
+		playerService.updateFlaggedRanks();
+	}
+	
+	public synchronized void moveRank(SbfRank currentRank, SbfRank targetRank) {
+		SbfRank maxRankAffected = null;
+		SbfRank minRankAffected = null;
+		int rankChange=0;
+		if(currentRank.getRank() > targetRank.getRank()) {
+			rankChange = 1;
+			maxRankAffected = playerService.getSbfRankObjByRank(currentRank.getRank()-1, UserSessionVars.getRankSet().getRankSetId());
+			minRankAffected = targetRank;
+		}
+		
+		for(SbfRank r : playerService.getAllSbfRanksBetween(minRankAffected.getRank(), maxRankAffected.getRank(), currentRank.getRankSetId())) {
+			r.setRank(r.getRank()+rankChange);
+			playerService.addRankToUpdateList(r);
+		}
+		currentRank.setRank(targetRank.getRank());
+		maxRankAffected.setRank(maxRankAffected.getRank()+rankChange);
+		minRankAffected.setRank(minRankAffected.getRank()+rankChange);
+		
+		playerService.addRankToUpdateList(minRankAffected);
+		playerService.addRankToUpdateList(maxRankAffected);
+		playerService.updateFlaggedRanks();
+	}
+	
+	public synchronized void moveRanksAbove(List<SbfRank> moveRanks, SbfRank aboveRank) {
+		int moveAboveRank=aboveRank.getRank();
+		int ranksRemoved=0;
+		int maxRank=moveAboveRank;
+		int minRank=moveAboveRank;
+		for(SbfRank r : moveRanks) {
+			//find range of ranks
+			if(r.getRank()>maxRank) maxRank = r.getRank();
+			if(r.getRank()<minRank) minRank = r.getRank();			
+		}
+		List<SbfRank> affectedRanks = playerService.getAllSbfRanksBetween(minRank, maxRank, aboveRank.getRankSetId());
+		affectedRanks.removeAll(moveRanks);
+		if(moveAboveRank==minRank) affectedRanks.add(aboveRank);
+		for(SbfRank r : moveRanks) {
+			if(r.getRank() < moveAboveRank) {
+				ranksRemoved++;
+			}
+		}
+		for(SbfRank r : affectedRanks) {
+			int targetRank = r.getRank();
+			for(SbfRank movedRank : moveRanks) {
+				if(r.getRank()<movedRank.getRank() && r.getRank() >= moveAboveRank) {
+					targetRank++;//the moved rank is going ahead of this rank, move rank lower
+				}else if (r.getRank() > movedRank.getRank() && r.getRank() < moveAboveRank) {
+					targetRank--;//the moved rank is going below this rank, move rank higher
+				}
+			}
+			r.setRank(targetRank);
+//			if(r.getRank()<moveAboveRank) {
+//				r.setRank(r.getRank()-ranksRemoved);
+//			}else {
+//				r.setRank(r.getRank()+ranksAdded);
+//			}
+			playerService.addRankToUpdateList(r);
+		}
+		int fromBelowCounter=0;
+		int fromAboveCounter=0;
+		for(SbfRank r : moveRanks) {//need to iterate again to know how many were above/below the target
+			if(r.getRank() < moveAboveRank) {
+				r.setRank(moveAboveRank-ranksRemoved + fromBelowCounter++);
+			}else {
+				r.setRank(moveAboveRank+fromAboveCounter++);
+			}
+			playerService.addRankToUpdateList(r);
+		}
+		playerService.updateFlaggedRanks();
+
+	}
+	
+	public synchronized void moveRanksBelow(List<SbfRank> moveRanks, SbfRank belowRank) {
+		int moveBelowRank=belowRank.getRank();
+		int ranksRemoved=0;
+		int maxRank=moveBelowRank;
+		int minRank=moveBelowRank;
+		for(SbfRank r : moveRanks) {
+			//find range of ranks
+			if(r.getRank()>maxRank) maxRank = r.getRank();
+			if(r.getRank()<minRank) minRank = r.getRank();			
+		}
+		List<SbfRank> affectedRanks = playerService.getAllSbfRanksBetween(minRank, maxRank, belowRank.getRankSetId());
+		affectedRanks.removeAll(moveRanks);
+		if(moveBelowRank==maxRank) affectedRanks.add(belowRank);
+		for(SbfRank r : moveRanks) {
+			if(r.getRank() < moveBelowRank) {
+				ranksRemoved++;
+			}
+		}
+		for(SbfRank r : affectedRanks) {
+			int targetRank = r.getRank();
+			for(SbfRank movedRank : moveRanks) {
+				if(r.getRank()<movedRank.getRank() && r.getRank() > moveBelowRank) {
+					targetRank++;//the moved rank is going ahead of this rank, move rank lower
+				}else if (r.getRank() > movedRank.getRank() && r.getRank() <= moveBelowRank) {
+					targetRank--;//the moved rank is going below this rank, move rank higher
+				}
+			}
+			r.setRank(targetRank);
+//			if(r.getRank()<=moveBelowRank) {
+//				r.setRank(r.getRank()-ranksRemoved);
+//			}else {
+//				r.setRank(r.getRank()+ranksAdded);
+//			}
+			playerService.addRankToUpdateList(r);
+		}
+		int fromBelowCounter=1;
+		int fromAboveCounter=1;
+		for(SbfRank r : moveRanks) {//need to iterate again to know how many were above/below the target
+			if(r.getRank() < moveBelowRank) {
+				r.setRank(moveBelowRank-ranksRemoved + fromBelowCounter++);
+			}else {
+				r.setRank(moveBelowRank+fromAboveCounter++);
+			}
+			playerService.addRankToUpdateList(r);
+		}
+		playerService.updateFlaggedRanks();
+	}
+	
 	public synchronized void setNewRankValue(SbfRank rank, int newRank){
 		if (newRank <= 0) return;
 
@@ -166,6 +296,7 @@ public class LeagueInfoManager {
 
 		playerService.addRankToUpdateList(rank);
 		playerService.addRankToUpdateList(oldRank);
+		playerService.updateFlaggedRanks();
 	}
 
 	public synchronized void movePlayerDown(Player player){
@@ -179,6 +310,7 @@ public class LeagueInfoManager {
 		}
 		sbfRank.setRank(newRank);
 		playerService.addRankToUpdateList(sbfRank);
+		playerService.updateFlaggedRanks();
 	}
 
 	public synchronized List<Integer> getPicksForTeam(int teamId){
@@ -230,13 +362,22 @@ public class LeagueInfoManager {
 	}
 
 	public void resetCheatsheetToDefaultRanks(SbfRankSet c){
+		ArrayList<SbfRank> sortedList = new ArrayList<SbfRank>();
 		for(Player player : playerService.getAllPlayers()){
 			if(player.getProRank() < 500 && player.getProRank() != 0){
-				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank());
-				playerService.insertSbfRank(rank);
+				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank(),0);
+				sortedList.add(rank);
+				//playerService.insertSbfRank(rank);
+				
 			}
 
 		}
+		Collections.sort(sortedList);
+		for(SbfRank r : sortedList) {
+			playerService.insertSbfRank(r);
+		}
+		
+		
 	}
 
 	public void setCheatsheetAsDefaultForLeagueAndUser (SbfRankSet c, SbfLeague l, SbfUser u){

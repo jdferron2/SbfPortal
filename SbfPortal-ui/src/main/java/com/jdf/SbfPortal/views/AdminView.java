@@ -120,7 +120,7 @@ public class AdminView extends VerticalLayout implements View  {
 				//add default ranks based on pro ranks
 				for(Player player : playerService.getAllPlayers()){
 					if(player.getProRank() < 500 && player.getProRank() != 0){
-						SbfRank rank = new SbfRank(rankSetId, player.getPlayerId(), player.getProRank());
+						SbfRank rank = new SbfRank(rankSetId, player.getPlayerId(), player.getProRank(),0);
 						playerService.insertSbfRank(rank);
 					}
 
@@ -142,7 +142,7 @@ public class AdminView extends VerticalLayout implements View  {
 				//add default ranks based on pro ranks
 				for(Player player : playerService.getAllPlayers()){
 					if(player.getProRank() < 500 && player.getProRank() != 0){
-						SbfRank rank = new SbfRank(0, player.getPlayerId(), player.getProRank());
+						SbfRank rank = new SbfRank(0, player.getPlayerId(), player.getProRank(),0);
 						playerService.insertSbfRank(rank);
 					}
 

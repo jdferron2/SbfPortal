@@ -174,6 +174,7 @@ public class EditCheatsheetSettingsView extends VerticalLayout implements View {
 		{
 			if(nameTextField.isEmpty()) return;
 			s.setRankSetName(nameTextField.getValue());
+			UserSessionVars.getPlayerService().updateSbfRankSet(s);
 			if(isDefaultCB.getValue() != isDefault){
 				SbfUserTeam ut = leagueService.getSbfUserTeamForLeagueAndUser(UserSessionVars.getCurrentUser(), 
 						UserSessionVars.getCurrentLeague());

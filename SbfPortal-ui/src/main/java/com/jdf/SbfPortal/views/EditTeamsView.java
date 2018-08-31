@@ -12,6 +12,7 @@ import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.Grid.SelectionMode;
@@ -128,6 +129,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 
 	private Window getEditTeamWindow(SbfTeam t){
 		String teamName = t.getTeamName();
+		CheckBox makeManager = new CheckBox("Set as manager");
 		String themeSong = t.getThemeSongUrl() == null ? "" : t.getThemeSongUrl();
 		ComboBox<SbfUser> usersCB =
 				new ComboBox<>("Available Users");
@@ -150,8 +152,7 @@ public class EditTeamsView extends VerticalLayout implements View {
 		ownerName.setValue(t.getOwnerName());
 		
 		SbfUserTeam ut = UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t);
-		SbfUser user=null;
-		if (ut != null ) { user=UserSessionVars.getLeagueService().getSbfUserById(ut.getUserId());}
+		final SbfUser user= ut!=null ? UserSessionVars.getLeagueService().getSbfUserById(ut.getUserId()) : null;
 		HorizontalLayout userLayout = new HorizontalLayout();
 		if(user != null) {
 			Label userName = new Label("User: " + user.getUserName());
@@ -164,6 +165,9 @@ public class EditTeamsView extends VerticalLayout implements View {
 						UserSessionVars.getLeagueService().getSbfUserTeamForTeam(t));
 				removeButton.setCaption("(User Removed)");
 				removeButton.setEnabled(false);
+				if(userLayout.getComponentIndex(makeManager)>-1) {
+					userLayout.removeComponent(makeManager);
+				}
 			}
 			});
 			userLayout.addComponents(userName, removeButton);
@@ -173,6 +177,15 @@ public class EditTeamsView extends VerticalLayout implements View {
 			userLayout.addComponents(usersCB);
 		}
 		
+		if(UserSessionVars.getAccessControl().isUserInRole("admin") && user != null) {
+			userLayout.addComponent(makeManager);
+			makeManager.setValue( UserSessionVars.getCurrentLeague().getLeagueManager()==user.getUserId());
+			makeManager.addValueChangeListener(event ->{
+						UserSessionVars.getCurrentLeague().setLeagueManager(user.getUserId());
+						UserSessionVars.getLeagueService().updateSbfLeague(UserSessionVars.getCurrentLeague());
+					});
+			
+		}
 		
 		subContent.setMargin(true);
 		ComboBox<Integer> draftSlotCB =

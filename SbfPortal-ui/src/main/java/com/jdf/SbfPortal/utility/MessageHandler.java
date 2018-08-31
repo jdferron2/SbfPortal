@@ -23,6 +23,8 @@ public class MessageHandler  {
 				playerDraftedCmd((SbfDraftRecord)args[0], (boolean)args[1]);
 			}else if (command.equals(BroadcastCommands.UNDO_DRAFT_PICK)){
 				undoDraftPickCmd((SbfDraftRecord)args[0]);
+			}else if (command.equals(BroadcastCommands.RESUME_DRAFT)) {
+				resumeDraft();
 			}
 		}
 	}
@@ -69,6 +71,14 @@ public class MessageHandler  {
 		}
 		
 
+	}
+	
+	private void resumeDraft() {
+		for(UI ui : session.getUIs()){
+			if (ui.getClass().equals(DraftDisplayPopupUI.class)){
+				((DraftDisplayPopupUI)ui).processPick(false, false);
+			}
+		}
 	}
 
 }

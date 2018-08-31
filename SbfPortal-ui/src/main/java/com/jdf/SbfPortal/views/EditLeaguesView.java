@@ -377,6 +377,7 @@ public class EditLeaguesView extends VerticalLayout implements View {
 	
 	public ComboBox<Integer> createTradeBox(int teamId){
 		ComboBox<Integer> teamPicksCB = new ComboBox<Integer>("Picks");
+		teamPicksCB.setPageLength(17);
 		teamPicksCB.setItemCaptionGenerator(
 				i->"Pick: " + Integer.toString(i) + " (r" + 
 						Integer.toString(LeagueInfoManager.getRound(i))+
@@ -390,6 +391,7 @@ public class EditLeaguesView extends VerticalLayout implements View {
 
 	public ComboBox<SbfTeam> createTeamSelectorCB(String name, ComboBox<Integer> connectedBox){
 		ComboBox<SbfTeam> teamCB = new ComboBox<SbfTeam>(name);
+		teamCB.setPageLength(12);
 		teamCB.setItems(leagueService.getAllSbfTeamsForLeague(UserSessionVars.getCurrentLeague().getLeagueId()));
 		teamCB.setItemCaptionGenerator(SbfTeam::getOwnerName);
 		teamCB.addValueChangeListener(event-> {
