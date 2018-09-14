@@ -90,6 +90,7 @@ public class CreateAccountView extends CssLayout implements View  {
 		reenterPassword.setWidth(15, Unit.EM);
 		registrationForm.addComponent(reenterPasswordError);
 
+		
 		CssLayout buttons = new CssLayout();
 		buttons.setStyleName("buttons");
 		registrationForm.addComponent(buttons);
@@ -100,10 +101,16 @@ public class CreateAccountView extends CssLayout implements View  {
 			@Override
 			public void buttonClick(Button.ClickEvent event) {
 				try {
-					createAccount();
+					if(createAccount()) {
+						createAccount.setEnabled(true);
+						UI.getCurrent().getNavigator().navigateTo(LoginScreen.NAME);
+					}else {
+						createAccount.setEnabled(true);
+						//UI.getCurrent().getPage().reload();;
+					}
 				} finally {
-					createAccount.setEnabled(true);
-					UI.getCurrent().getNavigator().navigateTo(LoginScreen.NAME);
+					
+					
 				}
 			}
 		});
@@ -114,7 +121,7 @@ public class CreateAccountView extends CssLayout implements View  {
 	}
 
 
-	private void createAccount() {
+	private boolean createAccount() {
 		boolean errorFound = false;
 		if (username.isEmpty()) {
 			usernameError.setValue("Please enter a valid username");
@@ -142,6 +149,9 @@ public class CreateAccountView extends CssLayout implements View  {
 			//redirect to success page
 			UserSessionVars.getAccountInfoManager().
 				createUserAccount(username.getValue(), password.getValue(), email.getValue());
+			return true;
+		}else {
+			return false;
 		}
 	}
 

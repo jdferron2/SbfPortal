@@ -14,7 +14,7 @@ import com.jdf.SbfPortal.backend.SbfDraftService;
 import com.jdf.SbfPortal.backend.SbfLeagueService;
 import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.SbfDraftRecord;
-import com.jdf.SbfPortal.backend.data.SbfLeague;
+import com.jdf.SbfPortal.backend.data.SbfRank;
 import com.jdf.SbfPortal.backend.utility.BroadcastCommands;
 import com.jdf.SbfPortal.backend.utility.Broadcaster;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
@@ -33,10 +33,10 @@ import com.vaadin.ui.Grid.SelectionMode;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.MenuBar.Command;
 import com.vaadin.ui.MenuBar.MenuItem;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -51,11 +51,11 @@ import com.vaadin.ui.themes.ValoTheme;
 public class DraftDayView extends HorizontalLayout implements View {
 	public final static String NAME = "Draft Day";
 	private Label onTheClock =  new Label();
-	private Grid<Player> availableGrid;
+	private Grid<SbfRank> availableGrid;
 	private Grid<SbfDraftRecord> draftedGrid;
-	private ListDataProvider<Player> playersDataProvider;
+	private ListDataProvider<SbfRank> ranksDataProvider;
 	private ListDataProvider<SbfDraftRecord> draftedPlayersDataProvider;
-	List<Player> playerList;
+	List<SbfRank> rankList;
 	private String availPlayerNameFilterValue="";
 	private String availPositionFilterValue="";
 	private String availIsDraftedFilterValue="Available";
@@ -66,7 +66,6 @@ public class DraftDayView extends HorizontalLayout implements View {
 	private SbfLeagueService leagueService;
 	private LeagueInfoManager leagueMgr;
 	private Integer leagueId;
-	private Integer rankSetId;
 	private Random rand = new Random();
 	private boolean isAWinner = false;
 	BrowserWindowOpener draftDisplayOpener;
@@ -92,7 +91,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 					selectedItem.getParent().setText(filterValue);
 				}
 			}
-			playersDataProvider.refreshAll();
+			ranksDataProvider.refreshAll();
 		}};
 
 		public DraftDayView(){
@@ -101,7 +100,6 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 		public void enter(ViewChangeEvent event) {
 			//PICKISINSOUND.setSource(new ExternalResource("http://k003.kiwi6.com/hotlink/q0rm2z6jes/Brandon.mp3"));
-			rankSetId = UserSessionVars.getRankSet().getRankSetId();
 			leagueId = UserSessionVars.getCurrentLeague().getLeagueId();
 			leagueMgr = UserSessionVars.getLeagueManager();
 			playerService = UserSessionVars.getPlayerService();
@@ -119,12 +117,12 @@ public class DraftDayView extends HorizontalLayout implements View {
 				viewBuilt=true;
 			}
 
-			playersDataProvider.refreshAll();
+			ranksDataProvider.refreshAll();
 			draftedPlayersDataProvider.refreshAll();
 		}
 
 		protected void buildView(){
-			playerList =  playerService.getTopNPlayers(500);
+			rankList =  playerService.getAllSbfRanks(UserSessionVars.getRankSet().getRankSetId());
 			onTheClock.setCaptionAsHtml(true);
 			setOnTheClockCaption();
 			setSizeFull();
@@ -142,7 +140,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			final HorizontalLayout gridsLayout = new HorizontalLayout();
 			gridsLayout.setSizeFull();
 
-			availableGrid = configureAvailableGrid(playerList);
+			availableGrid = configureAvailableGrid(rankList);
 			availableGrid.setSizeFull();
 
 			draftedGrid = configureDraftedGrid();
@@ -262,33 +260,30 @@ public class DraftDayView extends HorizontalLayout implements View {
 		}
 
 		@SuppressWarnings("unchecked")
-		public Grid<Player> configureAvailableGrid(List<Player> players){
-			Grid<Player> availableGrid = new Grid<>();
-			availableGrid.setItems(players);
+		public Grid<SbfRank> configureAvailableGrid(List<SbfRank> ranks){
+			Grid<SbfRank> availableGrid = new Grid<>();
+			availableGrid.setItems(ranks);
 
 			availableGrid.setSizeFull();
 			availableGrid.setSelectionMode(SelectionMode.SINGLE);
-			availableGrid.addColumn(p->playerService.getSbfRankById(p.getPlayerId(), rankSetId) == null ? 1000 : 
-				playerService.getSbfRankById(p.getPlayerId(), rankSetId).getRank()
+			availableGrid.addColumn(SbfRank::getRank
 					).setCaption("My Rank").setId("RankColumn");
-			availableGrid.addColumn(Player::getPosition).setCaption("Position").setId("PositionColumn");
-			availableGrid.addColumn(Player::getDisplayName).setCaption("Name").setId("PlayerNameColumn");
-			availableGrid.addColumn(Player::getTeam).setCaption("Team");
-			availableGrid.addColumn(p->{
-				return playerService.getSbfRankById(p.getPlayerId(), rankSetId).getTier();
-			}).setCaption("Tier");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getPosition()).setCaption("Position").setId("PositionColumn");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getTeam()).setCaption("Team");
+			availableGrid.addColumn(SbfRank::getTier).setCaption("Tier");
 			if(UserSessionVars.getAccessControl().isUserLeagueManager()){
-				availableGrid.addColumn(player->"Draft!", draftedButtonRenderer()).setId("DraftedColumn");
-				availableGrid.getColumn("DraftedColumn").setStyleGenerator(p -> {
-					if (draftService.getSbfDraftRecordByPlayerId(p.getPlayerId(), leagueId)!= null) {
+				availableGrid.addColumn(rank->"Draft!", draftedButtonRenderer()).setId("DraftedColumn");
+				availableGrid.getColumn("DraftedColumn").setStyleGenerator(r -> {
+					if (draftService.getSbfDraftRecordByPlayerId(r.getPlayerId(), leagueId)!= null) {
 						return "hidden" ;
 					}else{
 						return null;
 					}
 				});
 			}			
-			availableGrid.setStyleGenerator(player -> {
-				int tier = playerService.getSbfRankById(player.getPlayerId(), rankSetId).getTier();
+			availableGrid.setStyleGenerator(rank -> {
+				int tier = rank.getTier();
 				if (tier>0) {
 					return "T"+tier;
 				} else {
@@ -296,15 +291,15 @@ public class DraftDayView extends HorizontalLayout implements View {
 				}
 			});
 
-			playersDataProvider = (ListDataProvider<Player>) availableGrid.getDataProvider();
+			ranksDataProvider = (ListDataProvider<SbfRank>) availableGrid.getDataProvider();
 
-			playersDataProvider.setFilter(p->p, p -> availableGridFilter(p));
+			ranksDataProvider.setFilter(r->r, r -> availableGridFilter(r));
 			HeaderRow filterRow = availableGrid.appendHeaderRow();
 
 			TextField availPlayerNameFilter = getTextFilter();
 			availPlayerNameFilter.addValueChangeListener(event -> {
 				setAvailPlayerNameFilterValue(event.getValue());
-				playersDataProvider.refreshAll();
+				ranksDataProvider.refreshAll();
 			});
 
 			MenuBar availPositionFilter = getPositionFilter();
@@ -323,7 +318,8 @@ public class DraftDayView extends HorizontalLayout implements View {
 
 		}
 
-		public boolean availableGridFilter(Player player){
+		public boolean availableGridFilter(SbfRank rank){
+			Player player = playerService.getPlayerById(rank.getPlayerId());
 			//Player Name
 			if (availPlayerNameFilterValue != null && !availPlayerNameFilterValue.equals("")){
 				String playerLower = player.getDisplayName().toLowerCase(Locale.ENGLISH);
@@ -405,8 +401,8 @@ public class DraftDayView extends HorizontalLayout implements View {
 		public ButtonRenderer draftedButtonRenderer (){
 			ButtonRenderer<Object> draftButtonRenderer = new ButtonRenderer<Object>();
 			draftButtonRenderer.addClickListener(clickEvent -> {
-				Player selectedPlayer = (Player)clickEvent.getItem();
-				
+				SbfRank selection = (SbfRank)clickEvent.getItem();
+				Player selectedPlayer = playerService.getPlayerById(selection.getPlayerId());
 				processDraftPick(selectedPlayer);
 				
 			});
@@ -420,7 +416,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				SbfDraftRecord r = (SbfDraftRecord)clickEvent.getItem();
 				draftService.deleteSbfDraftRecord(r);
 				draftedGrid.getDataProvider().refreshAll();
-				playersDataProvider.refreshAll();
+				ranksDataProvider.refreshAll();
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
 						((DraftDisplayPopupUI) t).processPick(false ,true);
@@ -438,9 +434,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 		private void processDraftPick(Player p) {
 			SbfDraftRecord r = leagueMgr.draftPlayer(p, leagueId);
 			draftedGrid.getDataProvider().refreshAll();
-			playersDataProvider.refreshAll();
+			ranksDataProvider.refreshAll();
 			int randomInt = rand.nextInt(99) + 1;
-			if (randomInt < 12 && icingEnabled) isAWinner=true;
+			if (randomInt < 26 && icingEnabled) isAWinner=true;
 			for(UI t : getSession().getUIs()){
 				if(t.getClass().equals(DraftDisplayPopupUI.class)){
 					((DraftDisplayPopupUI) t).processPick(isAWinner, false);
@@ -496,7 +492,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			UI.getCurrent().access(new Runnable() {
 				@Override
 				public void run() {      
-					playersDataProvider.refreshAll();
+					ranksDataProvider.refreshAll();
 					draftedPlayersDataProvider.refreshAll();
 					setOnTheClockCaption();
 //					Notification notify = new Notification("Something changed.");

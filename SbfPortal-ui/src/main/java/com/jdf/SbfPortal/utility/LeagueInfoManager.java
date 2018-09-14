@@ -191,8 +191,11 @@ public class LeagueInfoManager {
 	}
 	
 	public synchronized void moveRanksAbove(List<SbfRank> moveRanks, SbfRank aboveRank) {
+		if(moveRanks.contains(aboveRank)) {
+			if (moveRanks.size() ==1) return;
+		}
 		int moveAboveRank=aboveRank.getRank();
-		int ranksRemoved=0;
+		int ranksMovedDown = 0;
 		int maxRank=moveAboveRank;
 		int minRank=moveAboveRank;
 		for(SbfRank r : moveRanks) {
@@ -203,47 +206,46 @@ public class LeagueInfoManager {
 		List<SbfRank> affectedRanks = playerService.getAllSbfRanksBetween(minRank, maxRank, aboveRank.getRankSetId());
 		affectedRanks.removeAll(moveRanks);
 		if(moveAboveRank==minRank) affectedRanks.add(aboveRank);
-		for(SbfRank r : moveRanks) {
-			if(r.getRank() < moveAboveRank) {
-				ranksRemoved++;
-			}
-		}
-		for(SbfRank r : affectedRanks) {
-			int targetRank = r.getRank();
-			for(SbfRank movedRank : moveRanks) {
-				if(r.getRank()<movedRank.getRank() && r.getRank() >= moveAboveRank) {
-					targetRank++;//the moved rank is going ahead of this rank, move rank lower
-				}else if (r.getRank() > movedRank.getRank() && r.getRank() < moveAboveRank) {
-					targetRank--;//the moved rank is going below this rank, move rank higher
+		boolean alreadyLooped = false;
+		if (affectedRanks.isEmpty()) return;
+		for(SbfRank affectedR : affectedRanks){
+			int origRank = affectedR.getRank();
+			for(SbfRank moveR : moveRanks) {
+				if(moveR.getRank() > origRank && origRank >= moveAboveRank) {
+					//this rank must change due to the move rank going above it in the order
+					affectedR.setRank(affectedR.getRank()+1);
+				}else if(moveR.getRank() < origRank && origRank < moveAboveRank) {
+					//rank must change due to move rank going below it in the order
+					affectedR.setRank(affectedR.getRank()-1);
+				}
+				if(!alreadyLooped) {
+					//if(moveR.getRank() > moveAboveRank) ranksMovedUp++;
+					if(moveR.getRank() < moveAboveRank) ranksMovedDown++;
+					
 				}
 			}
-			r.setRank(targetRank);
-//			if(r.getRank()<moveAboveRank) {
-//				r.setRank(r.getRank()-ranksRemoved);
-//			}else {
-//				r.setRank(r.getRank()+ranksAdded);
-//			}
-			playerService.addRankToUpdateList(r);
+			alreadyLooped = true;
+			playerService.addRankToUpdateList(affectedR);
 		}
-		int fromBelowCounter=0;
-		int fromAboveCounter=0;
-		for(SbfRank r : moveRanks) {//need to iterate again to know how many were above/below the target
-			if(r.getRank() < moveAboveRank) {
-				r.setRank(moveAboveRank-ranksRemoved + fromBelowCounter++);
-			}else {
-				r.setRank(moveAboveRank+fromAboveCounter++);
-			}
-			playerService.addRankToUpdateList(r);
+		
+		int numProcessed=0;
+		for (SbfRank moveR : moveRanks) {
+			moveR.setRank(moveAboveRank - ranksMovedDown + numProcessed++); 
+			playerService.addRankToUpdateList(moveR);
 		}
 		playerService.updateFlaggedRanks();
 
 	}
 	
 	public synchronized void moveRanksBelow(List<SbfRank> moveRanks, SbfRank belowRank) {
+		if(moveRanks.contains(belowRank)) {
+			if (moveRanks.size() ==1) return;
+		}
 		int moveBelowRank=belowRank.getRank();
 		int ranksRemoved=0;
 		int maxRank=moveBelowRank;
 		int minRank=moveBelowRank;
+		int ranksMovedDown = 0;
 		for(SbfRank r : moveRanks) {
 			//find range of ranks
 			if(r.getRank()>maxRank) maxRank = r.getRank();
@@ -252,41 +254,39 @@ public class LeagueInfoManager {
 		List<SbfRank> affectedRanks = playerService.getAllSbfRanksBetween(minRank, maxRank, belowRank.getRankSetId());
 		affectedRanks.removeAll(moveRanks);
 		if(moveBelowRank==maxRank) affectedRanks.add(belowRank);
-		for(SbfRank r : moveRanks) {
-			if(r.getRank() < moveBelowRank) {
-				ranksRemoved++;
-			}
-		}
-		for(SbfRank r : affectedRanks) {
-			int targetRank = r.getRank();
-			for(SbfRank movedRank : moveRanks) {
-				if(r.getRank()<movedRank.getRank() && r.getRank() > moveBelowRank) {
-					targetRank++;//the moved rank is going ahead of this rank, move rank lower
-				}else if (r.getRank() > movedRank.getRank() && r.getRank() <= moveBelowRank) {
-					targetRank--;//the moved rank is going below this rank, move rank higher
+		boolean alreadyLooped = false;
+		if (affectedRanks.isEmpty()) return;
+		for(SbfRank affectedR : affectedRanks){
+			int origRank = affectedR.getRank();
+			for(SbfRank moveR : moveRanks) {
+				if(moveR.getRank() > origRank && origRank > moveBelowRank) {
+					//this rank must change due to the move rank going above it in the order
+					affectedR.setRank(affectedR.getRank()+1);
+				}else if(moveR.getRank() < origRank && origRank <= moveBelowRank) {
+					//rank must change due to move rank going below it in the order
+					affectedR.setRank(affectedR.getRank()-1);
+				}
+				if(!alreadyLooped) {
+					//if(moveR.getRank() > moveAboveRank) ranksMovedUp++;
+					if(moveR.getRank() < moveBelowRank) ranksMovedDown++;
+					
 				}
 			}
-			r.setRank(targetRank);
-//			if(r.getRank()<=moveBelowRank) {
-//				r.setRank(r.getRank()-ranksRemoved);
-//			}else {
-//				r.setRank(r.getRank()+ranksAdded);
-//			}
-			playerService.addRankToUpdateList(r);
+			alreadyLooped = true;
+			playerService.addRankToUpdateList(affectedR);
 		}
-		int fromBelowCounter=1;
-		int fromAboveCounter=1;
-		for(SbfRank r : moveRanks) {//need to iterate again to know how many were above/below the target
-			if(r.getRank() < moveBelowRank) {
-				r.setRank(moveBelowRank-ranksRemoved + fromBelowCounter++);
-			}else {
-				r.setRank(moveBelowRank+fromAboveCounter++);
-			}
-			playerService.addRankToUpdateList(r);
+		
+		int numProcessed=0;
+		for (SbfRank moveR : moveRanks) {
+			moveR.setRank(moveBelowRank + 1 - ranksMovedDown + numProcessed++); 
+			playerService.addRankToUpdateList(moveR);
 		}
 		playerService.updateFlaggedRanks();
+
 	}
 	
+
+
 	public synchronized void setNewRankValue(SbfRank rank, int newRank){
 		if (newRank <= 0) return;
 

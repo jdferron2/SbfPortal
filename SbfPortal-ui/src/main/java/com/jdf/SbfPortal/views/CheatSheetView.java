@@ -367,9 +367,9 @@ public class CheatSheetView extends HorizontalLayout implements View {
 			//			}
 			//		}
 
-			if(playerService.getPlayerById(r.getPlayerId()).getProRank() > 500){
-				return false;
-			}
+//			if(playerService.getPlayerById(r.getPlayerId()).getProRank() > 500){
+//				return false;
+//			}
 			//Player Name
 			if (playerNameFilterValue != null && !playerNameFilterValue.equals("")){
 				String playerLower = p.getDisplayName().toLowerCase(Locale.ENGLISH);
