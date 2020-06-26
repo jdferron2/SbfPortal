@@ -89,7 +89,7 @@ public class SbfTeamDAOMysql implements SbfTeamDAO{
 			String sql = "insert into SBF_TEAMS "
 					+ "(league_id, owner_name, draft_slot, team_name, user_id, theme_song_url) "
 					+ "values (?,?,?,?,?,?)";
-			prepStmt = conn.prepareStatement(sql);
+			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
 			prepStmt.setInt(1, r.getLeagueId());
 			prepStmt.setString(2, r.getOwnerName());	

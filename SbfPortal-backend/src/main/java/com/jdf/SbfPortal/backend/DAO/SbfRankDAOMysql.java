@@ -46,16 +46,16 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "RANK_SET_ID, PLAYER_ID, RANK, TIER "
+					+ "RANK_SET_ID, PLAYER_ID, PLAYER_RANK, TIER "
 					+ "from SBF_RANKS "
 					+ "where RANK_SET_ID = " + rankSetId
-					+ " order by RANK asc";
+					+ " order by PLAYER_RANK asc";
 
 			rs = stmt.executeQuery(sql);
 			while (rs.next()){
 				SbfRank rank = new SbfRank(rs.getInt("RANK_SET_ID"),
 						rs.getInt("PLAYER_ID"),
-						rs.getInt("RANK"),
+						rs.getInt("PLAYER_RANK"),
 						rs.getInt("TIER"));			
 				sbfRanks.add(rank);    				
 			}
@@ -82,7 +82,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "insert into SBF_RANKS "
-					+ "(player_id, rank_set_id, rank, tier) "
+					+ "(player_id, rank_set_id, PLAYER_RANK, tier) "
 					+ "values (?,?,?,?)";
 			prepStmt = conn.prepareStatement(sql);
 
@@ -140,7 +140,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "update SBF_RANKS set "
-					+ "rank = ?, "
+					+ "PLAYER_RANK = ?, "
 					+ "tier = ? "
 					+ "where rank_set_id = ? and player_id = ?";
 			prepStmt = conn.prepareStatement(sql);

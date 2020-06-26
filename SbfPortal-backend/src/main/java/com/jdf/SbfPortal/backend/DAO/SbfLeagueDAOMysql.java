@@ -87,7 +87,7 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 			String sql = "insert into SBF_LEAGUE "
 					+ "(LEAGUE_NAME, NUM_TEAMS, LEAGUE_MANAGER) "
 					+ "values (?,?,?)";
-			prepStmt = conn.prepareStatement(sql);
+			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
 			prepStmt.setString(1, l.getLeagueName());
 			prepStmt.setInt(2, l.getNumTeams());	
@@ -123,16 +123,13 @@ public class SbfLeagueDAOMysql implements SbfLeagueDAO {
 					+ "NUM_TEAMS=?, "
 					+ "LEAGUE_MANAGER=? "
 					+ "WHERE league_id = ?";
-			prepStmt = conn.prepareStatement(sql);
+			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
 			prepStmt.setString(1, l.getLeagueName());
 			prepStmt.setInt(2, l.getNumTeams());	
 			prepStmt.setInt(3, l.getLeagueManager());	
 			prepStmt.setInt(4, l.getLeagueId());
 			prepStmt.execute();
-			ResultSet rs = prepStmt.getGeneratedKeys();
-			rs.next();
-			l.setLeagueId(rs.getInt(1));
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ", ex);
 		}

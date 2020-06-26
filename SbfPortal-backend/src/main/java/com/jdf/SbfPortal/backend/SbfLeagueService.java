@@ -81,9 +81,8 @@ public class SbfLeagueService {
 	}
 	
 	public synchronized List<SbfUser> getAllSbfUsers(){
-		if (sbfUsers == null) {
-			sbfUsers = sbfUserDao.getAllSbfUsers();
-		}
+		sbfUsers = sbfUserDao.getAllSbfUsers();
+
 		return sbfUsers;
 	}
 	

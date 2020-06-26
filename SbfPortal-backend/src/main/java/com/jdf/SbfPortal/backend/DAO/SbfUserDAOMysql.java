@@ -84,7 +84,7 @@ public class SbfUserDAOMysql implements SbfUserDAO{
 			String sql = "insert into SBF_USERS "
 					+ "(user_name, password, email, role) "
 					+ "values (?,?,?,?)";
-			prepStmt = conn.prepareStatement(sql);
+			prepStmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
 			prepStmt.setString(1, u.getUserName());
 			prepStmt.setString(2, u.getPassword());	
