@@ -20,6 +20,7 @@ import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
@@ -34,7 +35,15 @@ public class AdminView extends VerticalLayout implements View  {
 	private PlayerService playerService;
 
 	private boolean icingEnabled;
+	private Integer icePercent;
+	private Integer shotPercent;
+	private Integer shotgunPercent;
+
 	private boolean themeSongsEnabled;
+
+	public static final Integer DEFAULT_ICE_PERCENT = 12;
+	public static final Integer DEFAULT_SHOT_PERCENT = 8;
+	public static final Integer DEFAULT_SHOTGUN_PERCENT = 3;
 	public AdminView(){
 
 	}
@@ -47,6 +56,27 @@ public class AdminView extends VerticalLayout implements View  {
 			icingEnabled = true;
 		}else{
 			icingEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
+		}
+
+		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.ICE_PERCENT) == null){
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.ICE_PERCENT, DEFAULT_ICE_PERCENT);
+			icePercent = DEFAULT_ICE_PERCENT;
+		}else{
+			icePercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICE_PERCENT);
+		}
+
+		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOT_PERCENT) == null){
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOT_PERCENT, DEFAULT_SHOT_PERCENT);
+			shotPercent = DEFAULT_SHOT_PERCENT;
+		}else{
+			shotPercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOT_PERCENT);
+		}
+
+		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOTGUN_PERCENT) == null){
+			UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOTGUN_PERCENT, DEFAULT_SHOTGUN_PERCENT);
+			shotgunPercent = DEFAULT_SHOTGUN_PERCENT;
+		}else{
+			shotgunPercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOTGUN_PERCENT);
 		}
 
 		if(UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED) == null){
@@ -69,6 +99,41 @@ public class AdminView extends VerticalLayout implements View  {
 		UI.getCurrent().getSession().setAttribute(SessionAttributes.ICING_ENABLED, enableIcing.getValue())
 				);
 
+		TextField icePercentTF = new TextField("Ice Percent");
+		icePercentTF.setValue(String.valueOf(icePercent));
+		icePercentTF.addValueChangeListener(event->{
+			if(Integer.valueOf(icePercentTF.getValue()) + shotPercent + shotgunPercent <= 100) {
+				icePercent = Integer.valueOf(icePercentTF.getValue());
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.ICE_PERCENT, icePercent);		
+			}else {
+				icePercentTF.setValue(String.valueOf(icePercent));
+			}
+		}
+				);
+		
+		TextField shotPercentTF = new TextField("Shot Percent");
+		shotPercentTF.setValue(String.valueOf(shotPercent));
+		shotPercentTF.addValueChangeListener(event->{
+			if(Integer.valueOf(shotPercentTF.getValue()) + icePercent + shotgunPercent <= 100) {
+				shotPercent = Integer.valueOf(shotPercentTF.getValue());
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOT_PERCENT, shotPercent);		
+			}else {
+				shotPercentTF.setValue(String.valueOf(shotPercent));
+			}
+		}
+				);
+		
+		TextField shotgunPercentTF = new TextField("Shotgun Percent");
+		shotgunPercentTF.setValue(String.valueOf(shotgunPercent));
+		shotgunPercentTF.addValueChangeListener(event->{
+			if(Integer.valueOf(shotgunPercentTF.getValue()) + shotPercent + icePercent <= 100) {
+				shotgunPercent = Integer.valueOf(shotgunPercentTF.getValue());
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOTGUN_PERCENT, shotgunPercent);		
+			}else {
+				shotgunPercentTF.setValue(String.valueOf(shotgunPercent));
+			}
+		}
+				);
 		CheckBox enableThemeSongs = new CheckBox("Theme Songs Enabled");
 		enableThemeSongs.setValue(themeSongsEnabled);
 
@@ -83,11 +148,11 @@ public class AdminView extends VerticalLayout implements View  {
 			private static final long serialVersionUID = 1L;
 			public void buttonClick(ClickEvent event) {
 				//delete current player table
-				
+
 				HashMap<Integer, Player> playerLookup = new HashMap<Integer, Player>();
 				//re-load active players from api
 				Players players = RestAPIUtils.getInstance().invokeQueryPlayers();
-				
+
 
 				for(Player p : players.getPlayers()) {
 					p.setProRank(9999);
@@ -100,7 +165,7 @@ public class AdminView extends VerticalLayout implements View  {
 						player.setProRank(rank.getProRank());
 					}
 				}
-				
+
 				playerService.deleteAllPlayers();
 				playerService.batchPlayerInsert(players.getPlayers());
 
@@ -156,7 +221,7 @@ public class AdminView extends VerticalLayout implements View  {
 
 		HorizontalLayout buttonLayout = new HorizontalLayout();
 		buttonLayout.addComponents(resetPlayerList, resetMyRanks,resetDefaultRanks);
-		addComponents(enableIcing, enableThemeSongs, buttonLayout);
+		addComponents(enableIcing, enableThemeSongs, icePercentTF, shotPercentTF, shotgunPercentTF, buttonLayout);
 	}
 
 

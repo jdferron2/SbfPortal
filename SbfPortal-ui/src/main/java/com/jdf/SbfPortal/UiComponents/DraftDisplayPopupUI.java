@@ -46,19 +46,23 @@ public class DraftDisplayPopupUI extends UI {
 	boolean pickIsInDisplayed = false;
 	//private Audio FIREWORKSSOUND = new Audio(null, new ThemeResource("audio/fireworks2.mp3"));
 	private Audio TADASOUND = new Audio(null, new ThemeResource("audio/tada.mp3"));
+	private Audio SHOTGUNSONG = new Audio(null, new ThemeResource("audio/shotgunsong.mp3"));
 	//private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
 	private Audio TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/Lennon.mp3"));
 
 	private Random rand = new Random();
 	Resource iceResource = new ThemeResource("img/ice.jpg");
 	Resource shotResource = new ThemeResource("img/shot.jpg");
+	Resource shotGunResource = new ThemeResource("img/shotgun.png");
 	Image winningImage = new Image(null, iceResource);
+	Image shotgunImage = new Image(null, shotGunResource);
 	
 	private boolean themeSongsEnabled = true;
 	
 	VerticalLayout mainContent;
 	VerticalLayout pickIsInContent;
 	VerticalLayout winnerContent;
+	VerticalLayout shotgunContent;
 
 	Label latestPickLabel = new Label();
 	Label selectedPlayerLabel = new Label();
@@ -82,6 +86,7 @@ public class DraftDisplayPopupUI extends UI {
 	protected void buildLayout(){
 		buildPickIsIn();
 		buildWinnerDisplay();
+		this.buildShotgunDisplay();
 		addStyleName("bgMain");
 		mainContent = new VerticalLayout();
 		HorizontalLayout topBannerLayout = new HorizontalLayout();
@@ -218,28 +223,63 @@ public class DraftDisplayPopupUI extends UI {
 		winnerContent.setExpandRatio(picLayout, 1);
 		winnerContent.setExpandRatio(soundLayout, 0);
 	}
+	
+	void buildShotgunDisplay(){
+		//FIREWORKSSOUND.setShowControls(false); FIREWORKSSOUND.setSizeUndefined();
+		SHOTGUNSONG.setShowControls(false); SHOTGUNSONG.setSizeUndefined();
+		
+		VerticalLayout soundLayout = new VerticalLayout();
+		soundLayout.addComponents(SHOTGUNSONG);
 
-	public synchronized void processPick(boolean isAWinner, boolean isUndo){
+		shotgunContent= new VerticalLayout();
+		shotgunContent.setSizeFull();
+		HorizontalLayout picLayout = new HorizontalLayout();
+		Resource res = new ThemeResource("img/fireworks.gif");
+		Image fireWorksImg = new Image(null, res);
+		fireWorksImg.setSizeFull();
+		//iceImg.setSizeFull();
+		picLayout.setSizeFull();
+
+		picLayout.addComponents(fireWorksImg,shotgunImage);
+		picLayout.setComponentAlignment(shotgunImage, Alignment.MIDDLE_CENTER);
+
+		Label winnerLabel = new Label();
+		winnerLabel.setValue("SHOTGUN!!");
+		winnerLabel.addStyleName("pickIsIn");
+		winnerLabel.setWidth("100%");
+
+		Label congratsLabel = new Label();
+		congratsLabel.setValue("LEAGUE!");
+		congratsLabel.addStyleName("pickIsIn");
+		congratsLabel.setWidth("100%");
+
+		shotgunContent.addComponents(congratsLabel, picLayout, winnerLabel, soundLayout);
+		shotgunContent.setExpandRatio(picLayout, 1);
+		shotgunContent.setExpandRatio(soundLayout, 0);
+	}
+
+	public synchronized void processPick(String prize, boolean isUndo){
 		access(new Runnable() {
 			@Override
-			public void run() {     
+			public void run() { 
 				if(UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED) == null){
 					UI.getCurrent().getSession().setAttribute(SessionAttributes.THEME_SONGS_ENABLED, true);
 					themeSongsEnabled = true;
 				}else{
 					themeSongsEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.THEME_SONGS_ENABLED);
 				}
-				if (isAWinner){
-					int randomInt = rand.nextInt(9) + 1;
-					if(randomInt<=7){
-						winningImage.setSource(iceResource);
-					}else{
-						winningImage.setSource(shotResource);
-					}
+				if (prize.equals("ice")){
+					winningImage.setSource(iceResource);
 					setContent(winnerContent);
 					TADASOUND.play();
-					//FIREWORKSSOUND.play();
-					//CHEERINGSOUND.play();
+				}else if (prize.equals("shot")){
+					winningImage.setSource(shotResource);
+					setContent(winnerContent);
+					TADASOUND.play();
+				}else if (prize.equals("shotgun")) {
+					setContent(shotgunContent);
+					SHOTGUNSONG.play();
+					
 				}else{
 					setOnTheClockLabel();
 					setLatestPickValue();

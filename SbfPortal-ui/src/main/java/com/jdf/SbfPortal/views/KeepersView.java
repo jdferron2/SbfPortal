@@ -226,10 +226,6 @@ public class KeepersView extends VerticalLayout implements View {
 	}
 
 	private boolean draftKeeper(SbfKeeper k){
-		if(UserSessionVars.getLeagueService().getAllSbfKeepersForTeam(leagueId, k.getTeamId()).size() > 4) {
-			Notification.show("Selected team already has hit defined keeper limit.", Type.WARNING_MESSAGE);
-			return false;
-		}
 		if (draftService.getSbfDraftRecordByPlayerId(k.getPlayerId(), leagueId)!=null) {
 			Notification.show("Player already Kept", Type.ERROR_MESSAGE);
 			return false;
@@ -290,7 +286,10 @@ public class KeepersView extends VerticalLayout implements View {
 		{
 			if (selectRound.getValue() != null && selectTeam.getValue() != null){
 				SbfKeeper k = new SbfKeeper(leagueId, selectTeam.getValue().getTeamId(), playerId, selectRound.getValue());
-				if(draftKeeper(k)) {
+				if(UserSessionVars.getLeagueService().getAllSbfKeepersForTeam(leagueId, k.getTeamId()).size() > 4) {
+					Notification.show("Selected team already has hit defined keeper limit.", Type.WARNING_MESSAGE);
+				}
+				else if (draftKeeper(k)) {
 					leagueService.insertSbfKeeper(k);
 					keepersDataProvider.refreshAll();
 					playersDataProvider.refreshAll();

@@ -243,13 +243,12 @@ public class EditLeaguesView extends VerticalLayout implements View {
 //		numTeams.setValue(String.valueOf(l.getNumTeams()));
 
 		subContent.setMargin(true);
-
-
-
+		
 		Button submitButton = new Button("Submit");
 		submitButton.addClickListener(new Button.ClickListener()
 		{ @Override public void buttonClick(Button.ClickEvent clickEvent)
 		{
+			l.setLeagueName(leagueNameTextField.getValue());
 			leagueService.updateSbfLeague(l);
 			leaguesDataProvider.refreshAll();
 			subWindow.close();
@@ -378,6 +377,7 @@ public class EditLeaguesView extends VerticalLayout implements View {
 	public ComboBox<Integer> createTradeBox(int teamId){
 		ComboBox<Integer> teamPicksCB = new ComboBox<Integer>("Picks");
 		teamPicksCB.setPageLength(17);
+		teamPicksCB.setWidth("200px");
 		teamPicksCB.setItemCaptionGenerator(
 				i->"Pick: " + Integer.toString(i) + " (r" + 
 						Integer.toString(LeagueInfoManager.getRound(i))+

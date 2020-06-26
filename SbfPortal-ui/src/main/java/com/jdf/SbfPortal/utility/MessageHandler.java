@@ -40,7 +40,7 @@ public class MessageHandler  {
 				((DraftBoardPopupUI)ui).removeDraftSelection(r);
 			}
 			if (ui.getClass().equals(DraftDisplayPopupUI.class)){
-				((DraftDisplayPopupUI)ui).processPick(false, true);
+				((DraftDisplayPopupUI)ui).processPick("none", true);
 			}
 			if(v != null){
 				if (v.getClass().equals(DraftDayView.class)){
@@ -61,7 +61,7 @@ public class MessageHandler  {
 				((DraftBoardPopupUI)ui).addDraftSelection(r);
 			}
 			if (ui.getClass().equals(DraftDisplayPopupUI.class)){
-				((DraftDisplayPopupUI)ui).processPick(isAWinner, false);
+				((DraftDisplayPopupUI)ui).processPick("none", false);
 			}
 			if(v != null){
 				if (v.getClass().equals(DraftDayView.class)){
@@ -76,7 +76,7 @@ public class MessageHandler  {
 	private void resumeDraft() {
 		for(UI ui : session.getUIs()){
 			if (ui.getClass().equals(DraftDisplayPopupUI.class)){
-				((DraftDisplayPopupUI)ui).processPick(false, false);
+				((DraftDisplayPopupUI)ui).processPick("none", false);
 			}
 		}
 	}

@@ -271,4 +271,58 @@ button:active {
 	top:1px;
 }
 
+//RED
+ .v-grid-row.T1 > td {
+	background-color:rgba(255, 0, 23,.6);
+	color:white
+
+}
+	//BLUE
+.v-grid-row.T2 > td {
+	background-color: rgba(15, 0, 255,.7);
+	color:white;
+}
+	//GREEN
+.v-grid-row.T3> td {
+	background-color: rgba(0, 106, 32,.7);
+	color:white;
+}
+	//ORANGE
+.v-grid-row.T4 > td {
+	background-color: rgba(255, 162, 0  ,.9);
+	color:white;
+} 
+.v-grid-row.T5 > td {
+	background-color: rgba(207, 33, 194 , 0.6);
+	color: white;
+}
+.v-grid-row.T6 > td {
+	background-color: rgba(34, 193, 191   , 0.7);
+	color: white;
+}
+.v-grid-row.T7 > td {
+	background-color: rgba(193, 188, 34     , 0.7);
+	color: white;
+}
+.v-grid-row.T8 > td {
+	background-color: rgba(195, 5, 4, 0.6);
+	color: white;
+}
+.v-grid-row.T9 > td {
+	background-color: rgba(50, 0, 255, 0.7);
+	color: white;
+}
+.v-grid-row.T10 > td {
+	background-color: rgba(5, 50, 1, 0.7);
+	color: white;
+}
+.v-grid-row.T11 > td {
+	background-color: rgba(170, 162, 0, 0.5);
+	color: white;
+}
+.v-grid-row.T12 > td {
+	background-color: rgba(270, 33,180 , 0.6);
+	color: white;
+}
+
 }

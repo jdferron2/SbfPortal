@@ -69,6 +69,9 @@ public class DraftDayView extends HorizontalLayout implements View {
 	private Random rand = new Random();
 	private boolean isAWinner = false;
 	BrowserWindowOpener draftDisplayOpener;
+	private Integer icePercent;
+	private Integer shotPercent;
+	private Integer shotgunPercent;
 
 	BrowserWindowOpener draftBoardDisplayOpener;
 
@@ -110,6 +113,27 @@ public class DraftDayView extends HorizontalLayout implements View {
 				icingEnabled = true;
 			}else{
 				icingEnabled = (boolean) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICING_ENABLED);
+			}
+			
+			if(UI.getCurrent().getSession().getAttribute(SessionAttributes.ICE_PERCENT) == null){
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.ICE_PERCENT, AdminView.DEFAULT_ICE_PERCENT);
+				icePercent = AdminView.DEFAULT_ICE_PERCENT;
+			}else{
+				icePercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.ICE_PERCENT);
+			}
+			
+			if(UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOT_PERCENT) == null){
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOT_PERCENT, AdminView.DEFAULT_SHOT_PERCENT);
+				shotPercent = AdminView.DEFAULT_SHOT_PERCENT;
+			}else{
+				shotPercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOT_PERCENT);
+			}
+			
+			if(UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOTGUN_PERCENT) == null){
+				UI.getCurrent().getSession().setAttribute(SessionAttributes.SHOTGUN_PERCENT, AdminView.DEFAULT_SHOTGUN_PERCENT);
+				shotgunPercent = AdminView.DEFAULT_SHOTGUN_PERCENT;
+			}else{
+				shotgunPercent = (Integer) UI.getCurrent().getSession().getAttribute(SessionAttributes.SHOTGUN_PERCENT);
 			}
 
 			if (!viewBuilt) {
@@ -419,7 +443,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 				ranksDataProvider.refreshAll();
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(false ,true);
+						((DraftDisplayPopupUI) t).processPick("none" ,true);
 					}else if(t.getClass().equals(DraftBoardPopupUI.class)){
 						((DraftBoardPopupUI) t).removeDraftSelection(r);
 					}
@@ -435,11 +459,26 @@ public class DraftDayView extends HorizontalLayout implements View {
 			SbfDraftRecord r = leagueMgr.draftPlayer(p, leagueId);
 			draftedGrid.getDataProvider().refreshAll();
 			ranksDataProvider.refreshAll();
-			int randomInt = rand.nextInt(99) + 1;
-			if (randomInt < 26 && icingEnabled) isAWinner=true;
+			String prize = "none";
+			if(icingEnabled) {
+				int randomInt = rand.nextInt(99) + 1;
+				
+				isAWinner=true;
+				if (randomInt <= icePercent) {
+					prize = "ice";
+				}else if  (randomInt >icePercent && randomInt <= icePercent + shotPercent) {
+					prize = "shot";
+				}else if(randomInt >icePercent + shotPercent && randomInt <= icePercent + shotPercent + shotgunPercent) {
+					prize = "shotgun";
+				}else {
+					isAWinner=false;
+				}	
+			}
+			
+			
 			for(UI t : getSession().getUIs()){
 				if(t.getClass().equals(DraftDisplayPopupUI.class)){
-					((DraftDisplayPopupUI) t).processPick(isAWinner, false);
+					((DraftDisplayPopupUI) t).processPick(prize, false);
 				}else if(t.getClass().equals(DraftBoardPopupUI.class)){
 					((DraftBoardPopupUI) t).addDraftSelection(r);
 				}
@@ -475,7 +514,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			{
 				for(UI t : getSession().getUIs()){
 					if(t.getClass().equals(DraftDisplayPopupUI.class)){
-						((DraftDisplayPopupUI) t).processPick(false, false);
+						((DraftDisplayPopupUI) t).processPick("none", false);
 					}			
 				}
 				Broadcaster.broadcast(UserSessionVars.getCurrentLeague().getLeagueId(),UI.getCurrent().getSession(), BroadcastCommands.RESUME_DRAFT,null);
