@@ -157,7 +157,7 @@ public class DraftDisplayPopupUI extends UI {
 		onTheClockLabel.setValue("<div class=\"onTheClock\">On the clock: " + teamOnClock.getOwnerName() + "</div>");
 	}
 	Image getSbfLogo(){
-		Resource res = new ThemeResource("img/2017_SBF_Draft.png");
+		Resource res = new ThemeResource("img/2020_SBF_Draft.png");
 		Image image = new Image(null, res);
 		image.setSizeFull();
 		return image;

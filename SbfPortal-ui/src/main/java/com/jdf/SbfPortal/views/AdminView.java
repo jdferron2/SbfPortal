@@ -1,5 +1,8 @@
 package com.jdf.SbfPortal.views;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import com.jdf.SbfPortal.SessionAttributes;
@@ -9,9 +12,9 @@ import com.jdf.SbfPortal.backend.PlayerService;
 import com.jdf.SbfPortal.backend.data.DraftRank;
 import com.jdf.SbfPortal.backend.data.DraftRankings;
 import com.jdf.SbfPortal.backend.data.Player;
-import com.jdf.SbfPortal.backend.data.Players;
 import com.jdf.SbfPortal.backend.data.SbfRank;
-import com.jdf.SbfPortal.backend.utility.RestAPIUtils;
+import com.jdf.SbfPortal.backend.data.jsonModel.PlayerJson;
+import com.jdf.SbfPortal.backend.utility.RestAPIUtilsFFCalc;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Button;
@@ -149,25 +152,27 @@ public class AdminView extends VerticalLayout implements View  {
 			public void buttonClick(ClickEvent event) {
 				//delete current player table
 
-				HashMap<Integer, Player> playerLookup = new HashMap<Integer, Player>();
+				ArrayList<Player> playerList = new ArrayList<Player>();
 				//re-load active players from api
-				Players players = RestAPIUtils.getInstance().invokeQueryPlayers();
+				PlayerJson[] players = RestAPIUtilsFFCalc.getInstance().invokeQueryPlayers();
 
+				Arrays.sort(players, Comparator.comparing(PlayerJson::getAdp));
+				int rank = 1;
+				for(PlayerJson p : players) {
+					Player dbPlayer = new Player();
+					dbPlayer.setProRank(rank++);
+					dbPlayer.setActive(1);
+					dbPlayer.setDisplayName(p.getFullName());
+					dbPlayer.setPlayerId(p.getPlayerId());
+					dbPlayer.setPosition(p.getPosition());
+					dbPlayer.setTeam(p.getTeam());
 
-				for(Player p : players.getPlayers()) {
-					p.setProRank(9999);
-					playerLookup.put(p.getPlayerId(), p);
+					playerList.add(dbPlayer);
 				}
-				DraftRankings ranks = RestAPIUtils.getInstance().invokeQueryRanks();
-				for(DraftRank rank: ranks.getDraftRanks()){
-					Player player = playerLookup.get(rank.getPlayerId());
-					if (player != null){
-						player.setProRank(rank.getProRank());
-					}
-				}
+
 
 				playerService.deleteAllPlayers();
-				playerService.batchPlayerInsert(players.getPlayers());
+				playerService.batchPlayerInsert(playerList);
 
 				Notification.show("Player list update successfully!");	
 			}
