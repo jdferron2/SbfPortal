@@ -14,13 +14,15 @@ public class SbfRank implements Comparable<SbfRank>{
 	protected int rank;
 	protected int tier;
 	protected boolean flagForUpdate;
+	protected int auctionValue;
 	
 	public SbfRank(){
 	}
-	public SbfRank(int rankSetId, int playerId, int rank, int tier){
+	public SbfRank(int rankSetId, int playerId, int rank, int tier, int auctionValue){
 		this.rankSetId = rankSetId;
 		this.playerId = playerId;
 		this.rank=rank;
+		this.auctionValue=auctionValue;
 		setTier(tier);
 	}
 	
@@ -58,6 +60,12 @@ public class SbfRank implements Comparable<SbfRank>{
 	}
 	public void setTier(int tier) {
 		this.tier = tier;
+	}
+	public int getAuctionValue() {
+		return auctionValue;
+	}
+	public void setAuctionValue(int auctionValue) {
+		this.auctionValue = auctionValue;
 	}
 	
 	@Override

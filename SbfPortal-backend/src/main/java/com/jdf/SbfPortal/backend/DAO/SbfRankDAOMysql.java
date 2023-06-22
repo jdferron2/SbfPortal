@@ -46,7 +46,7 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "RANK_SET_ID, PLAYER_ID, PLAYER_RANK, TIER "
+					+ "RANK_SET_ID, PLAYER_ID, PLAYER_RANK, TIER, AUCTION_VALUE "
 					+ "from SBF_RANKS "
 					+ "where RANK_SET_ID = " + rankSetId
 					+ " order by PLAYER_RANK asc";
@@ -56,7 +56,8 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 				SbfRank rank = new SbfRank(rs.getInt("RANK_SET_ID"),
 						rs.getInt("PLAYER_ID"),
 						rs.getInt("PLAYER_RANK"),
-						rs.getInt("TIER"));			
+						rs.getInt("TIER"),
+						rs.getInt("AUCTION_VALUE"));			
 				sbfRanks.add(rank);    				
 			}
 		} catch (Exception ex) {
@@ -82,14 +83,15 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 			conn = DriverManager.getConnection(jdbcUrl);
 
 			String sql = "insert into SBF_RANKS "
-					+ "(player_id, rank_set_id, PLAYER_RANK, tier) "
-					+ "values (?,?,?,?)";
+					+ "(player_id, rank_set_id, PLAYER_RANK, tier, AUCTION_VALUE) "
+					+ "values (?,?,?,?, ?)";
 			prepStmt = conn.prepareStatement(sql);
 
 			prepStmt.setInt(1, s.getPlayerId());
 			prepStmt.setInt(2, s.getRankSetId());
 			prepStmt.setInt(3, s.getRank());	
 			prepStmt.setInt(4, s.getTier());
+			prepStmt.setInt(5, s.getAuctionValue());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ",  ex);
@@ -141,13 +143,16 @@ public class SbfRankDAOMysql implements SbfRankDAO {
 
 			String sql = "update SBF_RANKS set "
 					+ "PLAYER_RANK = ?, "
-					+ "tier = ? "
+					+ "tier = ? ,"
+					+ "auction_value = ? "
 					+ "where rank_set_id = ? and player_id = ?";
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, rank.getRank());
 			prepStmt.setInt(2, rank.getTier());
-			prepStmt.setInt(3, rank.getRankSetId());
-			prepStmt.setInt(4, rank.getPlayerId());
+			prepStmt.setInt(3, rank.getAuctionValue());
+			prepStmt.setInt(4, rank.getRankSetId());
+			prepStmt.setInt(5, rank.getPlayerId());
+
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ",  ex);

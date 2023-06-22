@@ -213,9 +213,11 @@ public class DraftDayView extends HorizontalLayout implements View {
 			draftedGrid.setItems(draftService.getAllDraftRecords(leagueId));
 			draftedGrid.setSizeFull();
 			draftedGrid.setSelectionMode(SelectionMode.SINGLE);
-			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getDisplayName())
+			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getDisplayName())
 			.setCaption("Player Name").setId("NameColumn");
-			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getPosition())
+			draftedGrid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getPosition())
 			.setCaption("Position");
 			draftedGrid.addColumn(s->leagueService.getSbfTeamByTeamId(s.getTeamId(), leagueId).getOwnerName())
 			.setCaption("Drafted By");
@@ -292,9 +294,12 @@ public class DraftDayView extends HorizontalLayout implements View {
 			availableGrid.setSelectionMode(SelectionMode.SINGLE);
 			availableGrid.addColumn(SbfRank::getRank
 					).setCaption("My Rank").setId("RankColumn");
-			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getPosition()).setCaption("Position").setId("PositionColumn");
-			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
-			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).getTeam()).setCaption("Team");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + r.getPlayerId()))
+					.getPosition()).setCaption("Position").setId("PositionColumn");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + r.getPlayerId()))
+					.getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
+			availableGrid.addColumn(r->playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + r.getPlayerId()))
+					.getTeam()).setCaption("Team");
 			availableGrid.addColumn(SbfRank::getTier).setCaption("Tier");
 			if(UserSessionVars.getAccessControl().isUserLeagueManager()){
 				availableGrid.addColumn(rank->"Draft!", draftedButtonRenderer()).setId("DraftedColumn");
@@ -343,7 +348,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 		}
 
 		public boolean availableGridFilter(SbfRank rank){
-			Player player = playerService.getPlayerById(rank.getPlayerId());
+			Player player = playerService.getPlayerById(rank.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + rank.getPlayerId()));
 			//Player Name
 			if (availPlayerNameFilterValue != null && !availPlayerNameFilterValue.equals("")){
 				String playerLower = player.getDisplayName().toLowerCase(Locale.ENGLISH);
@@ -426,7 +431,7 @@ public class DraftDayView extends HorizontalLayout implements View {
 			ButtonRenderer<Object> draftButtonRenderer = new ButtonRenderer<Object>();
 			draftButtonRenderer.addClickListener(clickEvent -> {
 				SbfRank selection = (SbfRank)clickEvent.getItem();
-				Player selectedPlayer = playerService.getPlayerById(selection.getPlayerId());
+				Player selectedPlayer = playerService.getPlayerById(selection.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + selection.getPlayerId()));
 				processDraftPick(selectedPlayer);
 				
 			});

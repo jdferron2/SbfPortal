@@ -2,7 +2,6 @@ package com.jdf.SbfPortal.backend.data;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -20,13 +19,16 @@ public class SbfDraftRecord {
 	protected int playerId;
 	protected int slotDrafted;
 	protected Date timeDrafted;
-	
-	public SbfDraftRecord(int leagueId, int teamId, int playerId, int slotDrafted, Timestamp timeDrafted){
+	protected int auctionCost;
+
+	public SbfDraftRecord(int leagueId, int teamId, int playerId, 
+			int slotDrafted, Timestamp timeDrafted, int auctionCost){
 		this.leagueId = leagueId;
 		this.teamId = teamId;
 		this.playerId = playerId;
 		this.slotDrafted = slotDrafted;
 		this.timeDrafted = timeDrafted;
+		this.auctionCost = auctionCost;
 	}
 	
 	public SbfDraftRecord(){
@@ -69,6 +71,14 @@ public class SbfDraftRecord {
 	}
 	public void setTimeDrafted(Timestamp timeDrafted) {
 		this.timeDrafted = timeDrafted;
+	}
+	
+	public int getAuctionCost() {
+		return auctionCost;
+	}
+
+	public void setAuctionCost(int auctionCost) {
+		this.auctionCost = auctionCost;
 	}
 	
 	@XmlElement (name="timeDrafted")

@@ -37,7 +37,8 @@ public class Player {
 		this.weight = weight;
 		this.dob = dob;
 		this.proRank = proRank;
-		this.dobString = dob.toString();
+		if (dob != null)
+			this.dobString = dob.toString();
 
 	}
 

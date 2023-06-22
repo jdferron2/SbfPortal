@@ -3,6 +3,7 @@ package com.jdf.SbfPortal.backend;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.log4j.Logger;
 
@@ -87,9 +88,9 @@ public class PlayerService {
 				p->getSbfRankById(p.getPlayerId(), rankSetId).getRank()==rank).findFirst().orElse(null);
 	}
 
-	public synchronized Player getPlayerById(int playerId) {
+	public synchronized Optional<Player> getPlayerById(int playerId) {
 		return getAllPlayers().stream().filter(
-				p->p.getPlayerId()==playerId).findFirst().orElse(null);
+				p->p.getPlayerId()==playerId).findFirst();
 	}	
 
 	public synchronized int getMaxProRank() {

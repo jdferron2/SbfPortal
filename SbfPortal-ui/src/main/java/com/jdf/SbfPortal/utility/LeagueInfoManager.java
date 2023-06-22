@@ -128,7 +128,9 @@ public class LeagueInfoManager {
 			SbfDraftRecord draftRecord = new SbfDraftRecord(
 					leagueId,
 					getTeamOnTheClock().getTeamId(),player.getPlayerId(),
-					getCurrentPick(),new Timestamp(System.currentTimeMillis()));
+					getCurrentPick(),
+					new Timestamp(System.currentTimeMillis()),
+					0); //auction cost if i ever add an auction view
 			draftService.addSbfDraftRecord(draftRecord);
 			return draftRecord;
 		}
@@ -364,8 +366,8 @@ public class LeagueInfoManager {
 	public void resetCheatsheetToDefaultRanks(SbfRankSet c){
 		ArrayList<SbfRank> sortedList = new ArrayList<SbfRank>();
 		for(Player player : playerService.getAllPlayers()){
-			if(player.getProRank() < 500 && player.getProRank() != 0){
-				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank(),0);
+			if(player.getProRank() < 700 && player.getProRank() != 0){
+				SbfRank rank = new SbfRank(c.getRankSetId(), player.getPlayerId(), player.getProRank(),0,0);
 				sortedList.add(rank);
 				//playerService.insertSbfRank(rank);
 				

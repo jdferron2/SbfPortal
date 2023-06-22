@@ -51,7 +51,7 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 
 			stmt = conn.createStatement();
 			String sql = "select "
-					+ "TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS "
+					+ "TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS, AUCTION_COST "
 					+ "from SBF_DRAFT where LEAGUE_ID = " + leagueId;
 
 			rs = stmt.executeQuery(sql);
@@ -60,7 +60,8 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 						rs.getInt("TEAM_ID"),
 						rs.getInt("PLAYER_ID"),
 						rs.getInt("SLOT_DRAFTED"),
-						rs.getTimestamp("DRAFTED_TS")
+						rs.getTimestamp("DRAFTED_TS"),
+						rs.getInt("AUCTION_COST")
 						);
 				sbfDraftRecords.add(drafRecord);    				
 			}
@@ -88,8 +89,8 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 		try {
 			conn = DriverManager.getConnection(jdbcUrl);
 
-			String sql = "insert into SBF_DRAFT (LEAGUE_ID, TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS) "
-					+ "values (?,?,?,?,?)";
+			String sql = "insert into SBF_DRAFT (LEAGUE_ID, TEAM_ID, PLAYER_ID, SLOT_DRAFTED, DRAFTED_TS, AUCTION_COST) "
+					+ "values (?,?,?,?,?,?)";
 
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setInt(1, record.getLeagueId());
@@ -97,6 +98,7 @@ public class SbfDraftRecordDAOMysql implements SbfDraftRecordDAO {
 			prepStmt.setInt(3, record.getPlayerId());
 			prepStmt.setInt(4, record.getSlotDrafted());
 			prepStmt.setTimestamp(5, new Timestamp(record.getTimeDrafted().getTime()));
+			prepStmt.setInt(6, record.getAuctionCost());
 			prepStmt.execute();
 		} catch (Exception ex) {
 			logger.error("Stack Trace: ",  ex);

@@ -2,7 +2,6 @@ package com.jdf.SbfPortal.views;
 
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -16,19 +15,11 @@ import com.jdf.SbfPortal.backend.data.Player;
 import com.jdf.SbfPortal.backend.data.SbfRank;
 import com.jdf.SbfPortal.backend.data.SbfRankSet;
 import com.jdf.SbfPortal.utility.LeagueInfoManager;
-import com.vaadin.data.provider.DataCommunicator;
 import com.vaadin.data.provider.ListDataProvider;
-import com.vaadin.data.provider.Query;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.Page;
-import com.vaadin.shared.data.sort.SortDirection;
-import com.vaadin.shared.ui.dnd.DropEffect;
-import com.vaadin.shared.ui.dnd.EffectAllowed;
-import com.vaadin.shared.ui.dnd.criteria.ComparisonOperator;
-import com.vaadin.shared.ui.dnd.criteria.Criterion.Match;
 import com.vaadin.shared.ui.grid.DropLocation;
-import com.vaadin.shared.ui.grid.DropMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
@@ -38,7 +29,6 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.MenuBar.Command;
 import com.vaadin.ui.MenuBar.MenuItem;
-import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -161,15 +151,20 @@ public class CheatSheetView extends HorizontalLayout implements View {
 			grid.setSelectionModel(selectionModel);
 			//grid.setSelectionMode(SelectionMode.MULTI);
 			grid.setItems(myRanks);
+			@SuppressWarnings("unused")
 			Column<SbfRank, ?> currentRankCol = grid.addColumn(SbfRank::getRank)
 					.setCaption("My Rank");
-			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getProRank()
+			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getProRank()
 					).setCaption("Pro Rank");
-			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getDisplayName()
+			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getDisplayName()
 					).setCaption("Name").setId("PlayerNameColumn");
-			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getTeam()
+			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getTeam()
 					).setCaption("Team");
-			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).getPosition()
+			grid.addColumn(s->playerService.getPlayerById(s.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + s.getPlayerId()))
+					.getPosition()
 					).setCaption("Position").setId("PositionColumn");
 			grid.addComponentColumn(rank->{
 				ComboBox<Integer> tierSelector = new ComboBox<Integer>();
@@ -359,7 +354,7 @@ public class CheatSheetView extends HorizontalLayout implements View {
 		}
 
 		public boolean gridFilter(SbfRank r){
-			Player p = playerService.getPlayerById(r.getPlayerId());
+			Player p = playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + r.getPlayerId()));
 			//below will hide keepers...dont think i like this
 			//		if(UserSessionVars.getCurrentLeague() != null){
 			//			if(leagueService.getSbfKeeperByPlayerId(p.getPlayerId(), UserSessionVars.getCurrentLeague().getLeagueId()) != null){

@@ -105,7 +105,7 @@ public class DraftDayBoardView extends HorizontalLayout implements View {
 		//	@Override
 		//	public void run() {      
 		Label l = draftLabelMap.get(r.getSlotDrafted());
-		Player p = playerService.getPlayerById(r.getPlayerId());
+		Player p = playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + r.getPlayerId()));
 		l.setValue(p.getDisplayName());
 		l.getParent().addStyleName(getPositionStyle(p.getPosition()));
 		//l.addStyleName(getPositionStyle(p.getPosition()));

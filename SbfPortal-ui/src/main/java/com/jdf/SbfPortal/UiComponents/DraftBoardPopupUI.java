@@ -111,7 +111,7 @@ public class DraftBoardPopupUI extends UI {
 			@Override
 			public void run() {      
 				Label l = draftLabelMap.get(r.getSlotDrafted());
-				Player p = playerService.getPlayerById(r.getPlayerId());
+				Player p = playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt find player: " + r.getPlayerId()));
 				l.setValue(p.getDisplayName());
 				l.getParent().addStyleName(getPositionStyle(p.getPosition()));
 				//l.addStyleName(getPositionStyle(p.getPosition()));
@@ -144,7 +144,7 @@ public class DraftBoardPopupUI extends UI {
 			@Override
 			public void run() {      
 				Label l = draftLabelMap.get(r.getSlotDrafted());
-				Player p = playerService.getPlayerById(r.getPlayerId());
+				Player p = playerService.getPlayerById(r.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt find player: " + r.getPlayerId()));
 				l.setValue(null);
 				l.getParent().removeStyleName(getPositionStyle(p.getPosition()));
 				l.setVisible(true);

@@ -152,7 +152,8 @@ public class KeepersView extends VerticalLayout implements View {
 		keepersGrid.setSelectionMode(SelectionMode.SINGLE);
 		keepersGrid.addColumn(k->leagueService.getSbfTeamByTeamId(k.getTeamId(), leagueId).getOwnerName()).setCaption("Team").setId("TeamColumn");
 		keepersGrid.addColumn(SbfKeeper::getRound).setCaption("Round Kept").setId("RoundKeptColumn").setMaximumWidth(70);
-		keepersGrid.addColumn(k->playerService.getPlayerById(k.getPlayerId()).getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
+		keepersGrid.addColumn(k->playerService.getPlayerById(k.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt Find player " + k.getPlayerId()))
+				.getDisplayName()).setCaption("Name").setId("PlayerNameColumn");
 
 		if(UserSessionVars.getAccessControl().isUserLeagueManager()) {
 			keepersGrid.addColumn(k->"Delete Keeper", deleteKeeperButtonRenderer()).setId("DeleteColumn");	
@@ -242,8 +243,14 @@ public class KeepersView extends VerticalLayout implements View {
 		}
 		
 		if(keeperPick > 0) {
-			draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
-					keeperPick, new Timestamp(System.currentTimeMillis())));
+			draftService.addSbfDraftRecord(
+					new SbfDraftRecord(
+							leagueId, 
+							k.getTeamId(), 
+							k.getPlayerId(), 
+							keeperPick, 
+							new Timestamp(System.currentTimeMillis()),
+							0)); //auction cost if i ever add an auction view
 			return true;
 		}else {
 			if(k.getRound() < 5) {//maybe theres already a keeper taking all the spots available, so move to the next round
@@ -256,8 +263,14 @@ public class KeepersView extends VerticalLayout implements View {
 				}
 			}
 			if(keeperPick > 0) {
-				draftService.addSbfDraftRecord(new SbfDraftRecord(leagueId, k.getTeamId(), k.getPlayerId(), 
-						keeperPick, new Timestamp(System.currentTimeMillis())));
+				draftService.addSbfDraftRecord(
+						new SbfDraftRecord(
+								leagueId, 
+								k.getTeamId(), 
+								k.getPlayerId(), 
+								keeperPick, 
+								new Timestamp(System.currentTimeMillis()),
+								0)); //auction cost if i ever add an auction view
 				return true;
 			}else {
 				Notification.show("Could not find required draft pick",Type.WARNING_MESSAGE );
@@ -268,7 +281,8 @@ public class KeepersView extends VerticalLayout implements View {
 		
 	}
 	private Window getSetKeeperWindow(int playerId){
-		Window subWindow = new Window(playerService.getPlayerById(playerId).getDisplayName());
+		Window subWindow = new Window(playerService.getPlayerById(playerId).orElseThrow(()->new RuntimeException("Couldnt Find player " + playerId))
+				.getDisplayName());
 		HorizontalLayout subContent = new HorizontalLayout();
 		subContent.setMargin(true);
 		ComboBox<SbfTeam> selectTeam =

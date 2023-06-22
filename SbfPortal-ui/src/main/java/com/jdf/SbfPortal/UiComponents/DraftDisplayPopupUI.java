@@ -1,11 +1,7 @@
 package com.jdf.SbfPortal.UiComponents;
 
 import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Random;
 
-import com.jdf.SbfPortal.SbfUI;
 import com.jdf.SbfPortal.SessionAttributes;
 import com.jdf.SbfPortal.authentication.UserSessionVars;
 import com.jdf.SbfPortal.backend.PlayerService;
@@ -50,7 +46,6 @@ public class DraftDisplayPopupUI extends UI {
 	//private Audio CHEERINGSOUND = new Audio(null, new ThemeResource("audio/cheering.mp3"));
 	private Audio TEAMTHEMESONG = new Audio(null, new ThemeResource("audio/Lennon.mp3"));
 
-	private Random rand = new Random();
 	Resource iceResource = new ThemeResource("img/ice.jpg");
 	Resource shotResource = new ThemeResource("img/shot.jpg");
 	Resource shotGunResource = new ThemeResource("img/shotgun.png");
@@ -134,8 +129,8 @@ public class DraftDisplayPopupUI extends UI {
 	public synchronized void setLatestPickValue(){
 		int lastPick = leagueMgr.getCurrentPick()-1;
 		if (lastPick == 0) return;
-		int round = leagueMgr.getRound(lastPick);
-		int pickInRound = leagueMgr.getPickInRound(lastPick);
+		int round = LeagueInfoManager.getRound(lastPick);
+		int pickInRound = LeagueInfoManager.getPickInRound(lastPick);
 		latestPickLabel.setValue("<h1 class=\"otc\">Round <br />" + round 
 				+ "<br />Pick<br />" + pickInRound + "</h1>");		
 	}	
@@ -145,7 +140,7 @@ public class DraftDisplayPopupUI extends UI {
 		if (latestPick == null) return;
 		SbfTeam teamOnClock = leagueService.getSbfTeamByTeamId(latestPick.getTeamId(), leagueId);
 		String teamName = teamOnClock.getOwnerName();
-		Player selectedPlayer = playerService.getPlayerById(latestPick.getPlayerId());		
+		Player selectedPlayer = playerService.getPlayerById(latestPick.getPlayerId()).orElseThrow(()->new RuntimeException("Couldnt find player: " + latestPick.getPlayerId()));		
 		selectedPlayerLabel.setValue("<div class=\"selectedPlayerInfo\">" + teamName + " selects<br />"
 				+ "<div class=\"selectedPlayer\">" + selectedPlayer.getDisplayName() + "<br /> </div>"
 				+ selectedPlayer.getPosition() + " | " + selectedPlayer.getTeam() + "<br />"
